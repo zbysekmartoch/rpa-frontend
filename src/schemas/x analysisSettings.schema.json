@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nastavení analýzy",
+  "type": "object",
+  "required": ["dateFrom", "dateTo", "basketId"],
+  "properties": {
+    "dateFrom": { "type": "string", "format": "date", "title": "Období od" },
+    "dateTo":   { "type": "string", "format": "date", "title": "Období do" },
+    "basketId": {
+      "type": "number",
+      "title": "Košík",
+      "description": "Vyber košík, na který se má analýza vztahovat"
+    },
+    "workflow": {
+      "type": "string",
+      "title": "Posloupnost skriptů",
+      "description": "Zadejte názvy skriptů, každý na nový řádek"
+    }
+  },
+  "additionalProperties": false
+}
