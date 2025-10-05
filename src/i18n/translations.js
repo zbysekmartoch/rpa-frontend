@@ -10,6 +10,7 @@ export const translations = {
     tabBaskets: 'Košíky',
     tabAnalyses: 'Analýzy',
     tabResults: 'Výsledky',
+    tabHarvest: 'Sběr dat',
     tabSettings: 'Nastavení',
     
     // Auth forms
@@ -52,6 +53,11 @@ export const translations = {
     dateToHelp: 'Poslední den období',
     workflowHelp: 'Zadejte názvy skriptů, každý na nový řádek',
     selectBasketPlaceholder: 'Vyber košík',
+    loadWorkflow: 'Načíst workflow',
+    selectWorkflow: 'Vyberte workflow',
+    workflowLoaded: 'Workflow načteno',
+    errorLoadingWorkflows: 'Chyba načítání seznamu workflows',
+    errorLoadingWorkflowContent: 'Chyba načítání obsahu workflow',
     
     // Products
     displayMode: 'Zobrazení',
@@ -145,6 +151,8 @@ export const translations = {
     brand: 'Značka',
     category: 'Kategorie',
     price: 'Cena',
+    priceCount: 'Počet cen',
+    sellerCount: 'Počet prodejců',
     availability: 'Dostupnost',
     productId: 'ID produktu',
     productName: 'Název produktu',
@@ -165,6 +173,7 @@ export const translations = {
     tabBaskets: 'Baskets',
     tabAnalyses: 'Analyses',
     tabResults: 'Results',
+    tabHarvest: 'Data harvesting',
     tabSettings: 'Settings',
     
     // Auth forms
@@ -207,6 +216,11 @@ export const translations = {
     dateToHelp: 'Last day of period',
     workflowHelp: 'Enter script names, each on a new line',
    // selectBasketPlaceholder: 'Select basket',
+    loadWorkflow: 'Load workflow',
+    selectWorkflow: 'Select workflow',
+    workflowLoaded: 'Workflow loaded',
+    errorLoadingWorkflows: 'Error loading workflows list',
+    errorLoadingWorkflowContent: 'Error loading workflow content',
     
     // Products
     displayMode: 'Display',
@@ -301,6 +315,8 @@ export const translations = {
     brand: 'Brand',
     category: 'Category',
     price: 'Price',
+    priceCount: 'Price count',
+    sellerCount: 'Seller count',
     availability: 'Availability',
     productId: 'Product ID',
     productName: 'Product name',
@@ -321,6 +337,7 @@ export const translations = {
     tabBaskets: 'Košíky',
     tabAnalyses: 'Analýzy',
     tabResults: 'Výsledky',
+    tabHarvest: 'Zber údajov',
     tabSettings: 'Nastavenia',
     
     // Auth forms
@@ -363,6 +380,11 @@ export const translations = {
     dateToHelp: 'Posledný deň obdobia',
     workflowHelp: 'Zadajte názvy skriptov, každý na nový riadok',
     selectBasketPlaceholder: 'Vyberte košík',
+    loadWorkflow: 'Načítať workflow',
+    selectWorkflow: 'Vyberte workflow',
+    workflowLoaded: 'Workflow načítané',
+    errorLoadingWorkflows: 'Chyba načítania zoznamu workflows',
+    errorLoadingWorkflowContent: 'Chyba načítania obsahu workflow',
     
     // Products
     displayMode: 'Zobrazenie',
@@ -456,6 +478,8 @@ export const translations = {
     brand: 'Značka',
     category: 'Kategória',
     price: 'Cena',
+    priceCount: 'Počet cien',
+    sellerCount: 'Počet predajcov',
     availability: 'Dostupnosť',
     productId: 'ID produktu',
     productName: 'Názov produktu',

@@ -7,6 +7,7 @@ import ProductsTab from './tabs/ProductsTab.jsx';
 import BasketsTab from './tabs/BasketsTab.jsx';
 import AnalysesTab from './tabs/AnalysesTab.jsx';
 import ResultsTab from './tabs/ResultsTab';
+import HarvestTab from './tabs/HarvestTab.jsx';
 import SettingsTab from './tabs/SettingsTab';
 
 function AppContent() {
@@ -64,6 +65,7 @@ function AppContent() {
           <TabButton id="kosiky">{t('tabBaskets')}</TabButton>
           <TabButton id="analytika">{t('tabAnalyses')}</TabButton>
           <TabButton id="vysledky">{t('tabResults')}</TabButton>
+          <TabButton id="sber">{t('tabHarvest')}</TabButton>
         </div>
         <div style={{ marginLeft: 'auto' }}>
           <TabButton id="nastaveni">{t('tabSettings')}</TabButton>
@@ -76,6 +78,7 @@ function AppContent() {
         {tab === 'kosiky' && <BasketsTab />}
         {tab === 'analytika' && <AnalysesTab />}
         {tab === 'vysledky' && <ResultsTab />}
+        {tab === 'sber' && <HarvestTab />}
         {tab === 'nastaveni' && <SettingsTab />}
       </div>
     </div>

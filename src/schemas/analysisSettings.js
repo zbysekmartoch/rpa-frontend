@@ -52,7 +52,7 @@ export const getAnalysisSettingsUiSchema = (language = 'cz') => {
       "ui:placeholder": t('selectBasketPlaceholder')
     },
     workflow: {
-      "ui:widget": "textarea",
+      "ui:widget": "WorkflowWidget",
       "ui:options": {
         rows: 20
       },

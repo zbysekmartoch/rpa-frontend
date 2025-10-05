@@ -5,6 +5,7 @@ import validator from '@rjsf/validator-ajv8';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
 import { getAnalysisSettingsSchema, getAnalysisSettingsUiSchema } from '../schemas/analysisSettings.js';
+import WorkflowSelector from '../components/WorkflowSelector.jsx';
 
 // Volitelně jednoduchý JSON editor (nahradíš za jsoneditor/Monaco, pokud chceš)
 function JsonTextarea({ value, onChange }) {
@@ -85,6 +86,11 @@ export default function AnalysisTab() {
       }
     };
   }, [baskets, baseUiSchema]);
+
+  // Custom widgets for RJSF
+  const widgets = useMemo(() => ({
+    WorkflowWidget: WorkflowSelector
+  }), []);
 
   // Načtení seznamu
   useEffect(() => {
@@ -363,6 +369,7 @@ export default function AnalysisTab() {
               customValidate={customValidate}
               onChange={(e) => setDraftSettings(e.formData)}
               onSubmit={handleSubmit}
+              widgets={widgets}
             >
               <button id="analysis-rjsf-save" type="submit" style={{ display: 'none' }}>Save</button>
             </Form>
