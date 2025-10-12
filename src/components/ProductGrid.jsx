@@ -43,11 +43,36 @@ export default function ProductGrid({
     const columnDefs = useMemo(() => ([
         { headerName: t('productId'), field: 'id', width: 90 },
         { headerName: t('productName'), field: 'name', flex: 1, minWidth: 200 },
-        { headerName: t('category'), field: 'category_path', width: 180 },
+        { headerName: t('category'), field: 'category', width: 180 },
         { headerName: t('brand'), field: 'brand', width: 120 },
-        { headerName: t('price'), field: 'price', width: 100 },
         { headerName: t('priceCount'), field: 'priceCount', width: 110 },
         { headerName: t('sellerCount'), field: 'sellerCount', width: 120 },
+        { 
+            headerName: t('oldestPrice'), 
+            field: 'minDate', 
+            width: 130,
+            cellRenderer: (params) => {
+                if (!params.value) return '-';
+                try {
+                    return new Date(params.value).toISOString().split('T')[0];
+                } catch {
+                    return params.value;
+                }
+            }
+        },
+        { 
+            headerName: t('newestPrice'), 
+            field: 'maxDate', 
+            width: 130,
+            cellRenderer: (params) => {
+                if (!params.value) return '-';
+                try {
+                    return new Date(params.value).toISOString().split('T')[0];
+                } catch {
+                    return params.value;
+                }
+            }
+        },
     ]), [t]);
 
     const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);

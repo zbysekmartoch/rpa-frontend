@@ -89,6 +89,32 @@ export default function ProductTable({ mode, activePath, selectedPaths, onActive
       cell: info => <div className="truncate" title={info.getValue()}>{info.getValue()}</div>,
       size: 520,
     }),
+    columnHelper.accessor('minDate', {
+      header: () => 'Nejstarší cena',
+      cell: info => {
+        const value = info.getValue();
+        if (!value) return '-';
+        try {
+          return new Date(value).toISOString().split('T')[0];
+        } catch {
+          return value;
+        }
+      },
+      size: 120,
+    }),
+    columnHelper.accessor('maxDate', {
+      header: () => 'Nejnovější cena',
+      cell: info => {
+        const value = info.getValue();
+        if (!value) return '-';
+        try {
+          return new Date(value).toISOString().split('T')[0];
+        } catch {
+          return value;
+        }
+      },
+      size: 120,
+    }),
   ], []);
 
   const table = useReactTable({

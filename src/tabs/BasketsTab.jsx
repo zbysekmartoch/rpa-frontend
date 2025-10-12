@@ -67,6 +67,34 @@ export default function BasketsTab() {
     { headerName: t('name'), field: 'name', flex: 2, minWidth: 240 },
     { headerName: t('brand'), field: 'brand', width: 160 },
     { headerName: t('category'), field: 'category', flex: 3, minWidth: 320 },
+    { headerName: t('priceCount'), field: 'priceCount', width: 110 },
+    { headerName: t('sellerCount'), field: 'sellerCount', width: 120 },
+    { 
+      headerName: t('oldestPrice'), 
+      field: 'minDate', 
+      width: 130,
+      cellRenderer: (params) => {
+        if (!params.value) return '-';
+        try {
+          return new Date(params.value).toISOString().split('T')[0];
+        } catch {
+          return params.value;
+        }
+      }
+    },
+    { 
+      headerName: t('newestPrice'), 
+      field: 'maxDate', 
+      width: 130,
+      cellRenderer: (params) => {
+        if (!params.value) return '-';
+        try {
+          return new Date(params.value).toISOString().split('T')[0];
+        } catch {
+          return params.value;
+        }
+      }
+    },
   ]), [t]);
   const prodDefault = useMemo(() => ({ sortable: true, resizable: true }), []);
 

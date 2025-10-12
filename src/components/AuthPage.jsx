@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import ResetPasswordForm from './ResetPasswordForm';
+import ConfirmResetPasswordForm from './ConfirmResetPasswordForm';
 
 export default function AuthPage() {
-  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset' | 'confirm-reset'
+  const [resetToken, setResetToken] = useState(null);
+
+  // Kontrola URL parametrů pro reset token
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+      setResetToken(token);
+      setMode('confirm-reset');
+      // Vyčistit URL od tokenu (volitelné, pro bezpečnost)
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   return (
     <div style={{
@@ -37,6 +52,13 @@ export default function AuthPage() {
         )}
         {mode === 'reset' && (
           <ResetPasswordForm onSwitchToLogin={() => setMode('login')} />
+        )}
+        {mode === 'confirm-reset' && (
+          <ConfirmResetPasswordForm
+            token={resetToken}
+            onSuccess={() => setMode('login')}
+            onSwitchToLogin={() => setMode('login')}
+          />
         )}
       </div>
     </div>

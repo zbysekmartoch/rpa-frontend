@@ -125,8 +125,8 @@ export default function ResultsTab() {
               </div>
             </div>
 
-            {/* Link na stažení */}
-            {active.status === 'completed' && (
+            {/* Link na stažení - nyní pro všechny analýzy */}
+            {active && (
               <div>
                 <label style={{ color: '#4b5563', display: 'block', marginBottom: 4 }}>
                   {t('downloadResult')}
