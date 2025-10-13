@@ -115,6 +115,16 @@ export default function HarvestScheduleTab() {
   // Lists for dropdowns
   const [harvesters, setHarvesters] = useState([]);
   const [dataSources, setDataSources] = useState([]);
+  
+  // Import form state
+  const [showingImportForm, setShowingImportForm] = useState(false);
+  const [importData, setImportData] = useState({
+    from: '',
+    to: '',
+    screenshots: false,
+    images: false
+  });
+  const [importing, setImporting] = useState(false);
 
   const leftRef = useRef(null);
 
@@ -131,12 +141,33 @@ export default function HarvestScheduleTab() {
     }
   }, []);
 
-  // Load harvesters for dropdown
+  // Load harvesters for dropdown with status check
   const loadHarvesters = useCallback(async () => {
     try {
       const d = await fetchJSON('/api/v1/harvesters');
       const items = Array.isArray(d) ? d : (d?.items ?? []);
-      setHarvesters(items);
+      
+      // Check status for each harvester
+      const harvestersWithStatus = await Promise.all(
+        items.map(async (harvester) => {
+          try {
+            const status = await fetchJSON(`/api/v1/harvesters/${harvester.id}/status`);
+            return {
+              ...harvester,
+              status,
+              isOnline: true
+            };
+          } catch {
+            return {
+              ...harvester,
+              status: { error: "Harvester API unavailable" },
+              isOnline: false
+            };
+          }
+        })
+      );
+      
+      setHarvesters(harvestersWithStatus);
     } catch {
       setHarvesters([]);
     }
@@ -165,6 +196,19 @@ export default function HarvestScheduleTab() {
     { headerName: 'Harvester', field: 'harvester_name', flex: 1, minWidth: 150 },
     { headerName: 'Data Source', field: 'datasource_name', flex: 1, minWidth: 150 },
     { headerName: 'Cron Expression', field: 'cron_expression', width: 150 },
+    { 
+      headerName: 'Data Transferred', 
+      field: 'lastImport', 
+      width: 180,
+      cellRenderer: (params) => {
+        if (!params.value) return '-';
+        try {
+          return new Date(params.value).toISOString().split('T').join(' ').split('.')[0];
+        } catch {
+          return params.value;
+        }
+      }
+    },
   ]), []);
   
   const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);
@@ -234,6 +278,51 @@ export default function HarvestScheduleTab() {
       alert('Error updating harvest schedule');
     }
   }, [activeSchedule, editData, reloadSchedules]);
+
+  // Import data from harvester
+  const handleImport = useCallback(async () => {
+    if (!activeSchedule) return;
+    
+    setImporting(true);
+    try {
+      const params = new URLSearchParams();
+      // Convert datetime-local format to ISO 8601
+      if (importData.from) {
+        const fromDate = new Date(importData.from);
+        params.append('from', fromDate.toISOString());
+      }
+      if (importData.to) {
+        const toDate = new Date(importData.to);
+        params.append('to', toDate.toISOString());
+      }
+      if (importData.screenshots) params.append('screenshots', 'true');
+      if (importData.images) params.append('images', 'true');
+      
+      const queryString = params.toString();
+      const url = `/api/v1/harvest-schedule/import/${activeSchedule.id}${queryString ? `?${queryString}` : ''}`;
+      
+      await fetchJSON(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      alert('Import started successfully!');
+      setShowingImportForm(false);
+      setImportData({ from: '', to: '', screenshots: false, images: false });
+      await reloadSchedules();
+    } catch (error) {
+      alert('Error starting import: ' + (error.message || 'Unknown error'));
+    } finally {
+      setImporting(false);
+    }
+  }, [activeSchedule, importData, reloadSchedules]);
+
+  // Get harvester status
+  const getHarvesterStatus = useCallback(() => {
+    if (!activeSchedule || !harvesters.length) return null;
+    const harvester = harvesters.find(h => h.id === activeSchedule.harvester_id);
+    return harvester;
+  }, [activeSchedule, harvesters]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -509,12 +598,232 @@ export default function HarvestScheduleTab() {
                       {interpretCronExpression(activeSchedule.cron_expression)}
                     </div>
                   </div>
+                  {activeSchedule.lastImport && (
+                    <div>
+                      <strong>Last Data Tranfer:</strong>
+                      <div style={{ 
+                        marginTop: 4, 
+                        padding: '8px 12px', 
+                        background: '#f0fdf4', 
+                        border: '1px solid #bbf7d0',
+                        borderRadius: 4,
+                        fontSize: 14,
+                        color: '#166534'
+                      }}>
+                        {new Date(activeSchedule.lastImport).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                  {!activeSchedule.lastImport && (
+                    <div>
+                      <strong>Last Data Trasfer:</strong>
+                      <div style={{ 
+                        marginTop: 4, 
+                        padding: '8px 12px', 
+                        background: '#fef3c7', 
+                        border: '1px solid #fde68a',
+                        borderRadius: 4,
+                        fontSize: 14,
+                        color: '#92400e'
+                      }}>
+                        No import yet
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Import Data Section */}
+                  <div style={{ 
+                    marginTop: 16, 
+                    paddingTop: 16, 
+                    borderTop: '1px solid #e5e7eb' 
+                  }}>
+                    <strong>Import Data from Harvester</strong>
+                    {(() => {
+                      const harvester = getHarvesterStatus();
+                      const isOnline = harvester?.isOnline || false;
+                      
+                      return (
+                        <div style={{ marginTop: 8 }}>
+                          <button
+                            onClick={() => setShowingImportForm(true)}
+                            disabled={!isOnline}
+                            style={{
+                              padding: '8px 16px',
+                              background: isOnline ? '#3b82f6' : '#9ca3af',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: 6,
+                              cursor: isOnline ? 'pointer' : 'not-allowed',
+                              fontWeight: 500,
+                            }}
+                          >
+                            Import Data from Harvester
+                          </button>
+                          {!isOnline && (
+                            <div style={{ 
+                              marginTop: 8, 
+                              padding: '8px 12px',
+                              background: '#fee2e2',
+                              border: '1px solid #fecaca',
+                              borderRadius: 4,
+                              fontSize: 13,
+                              color: '#991b1b'
+                            }}>
+                              Harvester API unavailable - harvester is offline
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               )}
             </div>
           )}
         </section>
       </div>
+
+      {/* Import Data Modal */}
+      {showingImportForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            width: '90%',
+            maxWidth: 500,
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0' }}>Import Data from Harvester</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>
+                  From (optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={importData.from}
+                  onChange={(e) => setImportData({...importData, from: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    fontSize: 14
+                  }}
+                />
+                <small style={{ color: '#6b7280', fontSize: 12, marginTop: 4, display: 'block' }}>
+                  Start date for filtering data
+                </small>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 500 }}>
+                  To (optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={importData.to}
+                  onChange={(e) => setImportData({...importData, to: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    fontSize: 14
+                  }}
+                />
+                <small style={{ color: '#6b7280', fontSize: 12, marginTop: 4, display: 'block' }}>
+                  End date for filtering data
+                </small>
+              </div>
+
+              <div style={{ 
+                padding: 12, 
+                background: '#f8fafc',
+                border: '1px solid #e5e7eb',
+                borderRadius: 6
+              }}>
+                <div style={{ marginBottom: 4, fontWeight: 500, fontSize: 14 }}>Content Types</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={importData.screenshots}
+                      onChange={(e) => setImportData({...importData, screenshots: e.target.checked})}
+                      style={{ width: 18, height: 18 }}
+                    />
+                    <span style={{ fontSize: 14 }}>Include price screenshots</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={importData.images}
+                      onChange={(e) => setImportData({...importData, images: e.target.checked})}
+                      style={{ width: 18, height: 18 }}
+                    />
+                    <span style={{ fontSize: 14 }}>Include product images</span>
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                <button
+                  onClick={handleImport}
+                  disabled={importing}
+                  style={{
+                    flex: 1,
+                    padding: '10px 20px',
+                    background: importing ? '#9ca3af' : '#22c55e',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: importing ? 'not-allowed' : 'pointer',
+                    fontWeight: 500,
+                    fontSize: 14
+                  }}
+                >
+                  {importing ? 'Importing...' : 'Start Import'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowingImportForm(false);
+                    setImportData({ from: '', to: '', screenshots: false, images: false });
+                  }}
+                  disabled={importing}
+                  style={{
+                    flex: 1,
+                    padding: '10px 20px',
+                    background: '#fff',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    cursor: importing ? 'not-allowed' : 'pointer',
+                    fontSize: 14
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
