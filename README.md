@@ -51,11 +51,108 @@ npm run build
 
 ### Configuration
 
-1. Copy `.env.example` to `.env`
-2. Set backend API URL:
-   ```
-   VITE_API_BASE_URL=http://localhost:8000
-   ```
+Configuration is done in `vite.config.js`:
+
+#### Development Server Configuration
+```javascript
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true,  // Required for external access (0.0.0.0)
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
+})
+```
+
+**Key settings:**
+- `host: true` - Binds server to `0.0.0.0`, making it accessible from external network
+- `port: 5173` - Default Vite dev server port
+- `proxy: /api` - Proxies API requests to backend server
+
+#### Environment Variables
+
+Create `.env` file for environment-specific configuration:
+```bash
+# Backend API URL (used in production build)
+VITE_API_BASE_URL=http://localhost:3000
+
+# Other environment variables as needed
+```
+
+**Note:** In development, API calls are proxied through Vite dev server. In production, `VITE_API_BASE_URL` is used.
+
+### Running with PM2
+
+For production deployment with PM2 process manager:
+
+#### Installation
+```bash
+npm install -g pm2
+```
+
+#### Create PM2 ecosystem file (`ecosystem.config.js`):
+```javascript
+module.exports = {
+  apps: [{
+    name: 'rpa-frontend',
+    script: 'npm',
+    args: 'run dev',
+    cwd: '/path/to/rpa-frontend',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: 'development',
+      PORT: 5173
+    }
+  }]
+}
+```
+
+#### PM2 Commands
+```bash
+# Start application
+pm2 start ecosystem.config.js
+
+# View status
+pm2 status
+
+# View logs
+pm2 logs rpa-frontend
+
+# Restart application
+pm2 restart rpa-frontend
+
+# Stop application
+pm2 stop rpa-frontend
+
+# Auto-start on system boot
+pm2 startup
+pm2 save
+```
+
+#### Alternative: Direct PM2 Start
+```bash
+# Start dev server with PM2
+pm2 start npm --name "rpa-frontend" -- run dev
+
+# Start production build with serve
+npm run build
+pm2 serve dist 5173 --name "rpa-frontend" --spa
+```
+
+**Production considerations:**
+- Use `npm run build` to create optimized production bundle
+- Serve `dist/` folder with PM2 or nginx
+- Set `VITE_API_BASE_URL` to production backend URL
+- Enable HTTPS for production deployment
 
 ## Project Structure
 
