@@ -1,7 +1,7 @@
 export const translations = {
   cz: {  // <- změna z "cs" na "cz"
     // App level
-    appTitle: 'Retail Prices Analyzer [ver 0.1]',
+    appTitle: 'Retail Prices Analyzer',
     loggedInAs: 'Přihlášen:',
     logout: 'Odhlásit',
     
@@ -51,6 +51,8 @@ export const translations = {
     czech: 'Čeština',
     english: 'Angličtina',
     slovak: 'Slovenština',
+    showAdvancedUI: 'Zobrazovat pokročilé rozhraní',
+    showAdvancedUIDescription: 'Umožňuje přístup k pokročilým funkcím jako je správa sběru dat',
     
     // Analysis Settings Schema
     analysisSettingsTitle: 'Nastavení analýzy',
@@ -169,6 +171,7 @@ export const translations = {
     availability: 'Dostupnost',
     productId: 'ID produktu',
     productName: 'Název produktu',
+    productUrl: 'URL',
     
     // Login form
     loginFailed: 'Přihlášení selhalo',
@@ -177,7 +180,7 @@ export const translations = {
   
   en: {
     // App level
-    appTitle: 'Retail Prices Analyzer [ver 0.1]',
+    appTitle: 'Retail Prices Analyzer',
     loggedInAs: 'Logged in:',
     logout: 'Logout',
     
@@ -227,6 +230,8 @@ export const translations = {
     czech: 'Czech',
     english: 'English',
     slovak: 'Slovak',
+    showAdvancedUI: 'Show advanced interface',
+    showAdvancedUIDescription: 'Enables access to advanced features such as data harvesting management',
     
     // Analysis Settings Schema
     analysisSettingsTitle: 'Analysis Settings',
@@ -346,6 +351,7 @@ export const translations = {
     availability: 'Availability',
     productId: 'Product ID',
     productName: 'Product name',
+    productUrl: 'URL',
     
     // Login form
     loginFailed: 'Login failed',
@@ -354,7 +360,7 @@ export const translations = {
   
   sk: {
     // App level
-    appTitle: 'Retail Prices Analyzer [ver 0.1]',
+    appTitle: 'Retail Prices Analyzer',
     loggedInAs: 'Prihlásený:',
     logout: 'Odhlásiť',
     
@@ -404,6 +410,8 @@ export const translations = {
     czech: 'Čeština',
     english: 'Angličtina',
     slovak: 'Slovenčina',
+    showAdvancedUI: 'Zobraziť pokročilé rozhranie',
+    showAdvancedUIDescription: 'Umožňuje prístup k pokročilým funkciám ako je správa zberu dát',
     
     // Analysis Settings Schema
     analysisSettingsTitle: 'Nastavenia analýzy',
@@ -522,6 +530,7 @@ export const translations = {
     availability: 'Dostupnosť',
     productId: 'ID produktu',
     productName: 'Názov produktu',
+    productUrl: 'URL',
     
     // Login form
     loginFailed: 'Prihlásenie zlyhalo',

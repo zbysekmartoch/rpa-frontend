@@ -124,18 +124,7 @@ export default function ProductsTab() {
             onActivate={setActivePath}
           />
 
-          {/* Přehled stavů */}
-          <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280' }}>
-            <div style={{ marginBottom: 6 }}>
-              {t('activeCategory')}: {activePath ? <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>{activePath}</code> : t('none')}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {t('selectedCategories')} ({selectedPaths.length}):
-              {selectedPaths.map(p => (
-                <code key={p} style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>{p}</code>
-              ))}
-            </div>
-          </div>
+  
         </aside>
 
         <section

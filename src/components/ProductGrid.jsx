@@ -10,6 +10,27 @@ import { useLanguage } from '../context/LanguageContext';
 // registrace komunitních modulů (řeší chybu #272)
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+// Custom cell renderer pro URL
+const UrlCellRenderer = (props) => {
+    if (!props.value) return <span>-</span>;
+    return (
+        <a 
+            href={props.value} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{
+                color: '#3b82f6',
+                textDecoration: 'none',
+                cursor: 'pointer'
+            }}
+            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+        >
+            🔗 Open
+        </a>
+    );
+};
+
 export default function ProductGrid({
     mode,             // 'active' | 'selected'
     activePath,       // string nebo ''
@@ -72,6 +93,12 @@ export default function ProductGrid({
                     return params.value;
                 }
             }
+        },
+        {
+            headerName: t('productUrl'),
+            field: 'url',
+            width: 100,
+            cellRenderer: UrlCellRenderer
         },
     ]), [t]);
 

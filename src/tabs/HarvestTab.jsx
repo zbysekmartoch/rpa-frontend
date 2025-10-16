@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import HarvestersTab from './HarvestersTab.jsx';
 import DataSourcesTab from './DataSourcesTab.jsx';
 import HarvestScheduleTab from './HarvestScheduleTab.jsx';
+import ToolsTab from './ToolsTab.jsx';
 
 export default function HarvestTab() {
   const [activeSubTab, setActiveSubTab] = useState('harvesters');
@@ -34,6 +35,7 @@ export default function HarvestTab() {
         <SubTabButton id="harvesters">Harvesters</SubTabButton>
         <SubTabButton id="datasources">Data Sources</SubTabButton>
         <SubTabButton id="schedule">Harvest Schedule</SubTabButton>
+        <SubTabButton id="tools">Tools</SubTabButton>
       </div>
 
       {/* Sub-tab content */}
@@ -47,6 +49,7 @@ export default function HarvestTab() {
         {activeSubTab === 'harvesters' && <HarvestersTab />}
         {activeSubTab === 'datasources' && <DataSourcesTab />}
         {activeSubTab === 'schedule' && <HarvestScheduleTab />}
+        {activeSubTab === 'tools' && <ToolsTab />}
       </div>
     </div>
   );

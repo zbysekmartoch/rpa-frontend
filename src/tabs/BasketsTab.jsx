@@ -6,6 +6,27 @@ import { useLanguage } from '../context/LanguageContext';
 
 const asItems = (d) => (Array.isArray(d) ? d : (d?.items ?? []));
 
+// Custom cell renderer pro URL
+const UrlCellRenderer = (props) => {
+  if (!props.value) return <span>-</span>;
+  return (
+    <a 
+      href={props.value} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      style={{
+        color: '#3b82f6',
+        textDecoration: 'none',
+        cursor: 'pointer'
+      }}
+      onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+      onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+    >
+      🔗 Open
+    </a>
+  );
+};
+
 export default function BasketsTab() {
   const { t } = useLanguage();
 
@@ -94,6 +115,12 @@ export default function BasketsTab() {
           return params.value;
         }
       }
+    },
+    {
+      headerName: t('productUrl'),
+      field: 'url',
+      width: 100,
+      cellRenderer: UrlCellRenderer
     },
   ]), [t]);
   const prodDefault = useMemo(() => ({ sortable: true, resizable: true }), []);
