@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const asItems = (d) => (Array.isArray(d) ? d : (d?.items ?? []));
 
@@ -29,6 +30,7 @@ const UrlCellRenderer = (props) => {
 
 export default function BasketsTab() {
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   const [baskets, setBaskets] = useState([]);
   const [activeBasket, setActiveBasket] = useState(null);
@@ -36,8 +38,11 @@ export default function BasketsTab() {
   const [status, setStatus] = useState('');
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newIsShared, setNewIsShared] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+  const [editingOwnership, setEditingOwnership] = useState(false);
+  const [editIsShared, setEditIsShared] = useState(false);
 
   const leftRef = useRef(null);
   const rightRef = useRef(null);
@@ -78,6 +83,17 @@ export default function BasketsTab() {
     { headerName: t('id'), field: 'id', width: 90 },
     { headerName: t('name'), field: 'name', flex: 1, minWidth: 180 },
     { headerName: t('itemCount'), field: 'itemCount', width: 110 },
+    { 
+      headerName: t('ownership'), 
+      field: 'isShared', 
+      width: 120,
+      cellRenderer: (params) => {
+        if (params.data.isShared || params.data.usr_id === 0) {
+          return '🌐 ' + t('shared');
+        }
+        return '🔒 ' + t('private');
+      }
+    },
   ]), [t]);
   const basketDefault = useMemo(() => ({ sortable: true, resizable: true }), []);
   const onBasketRowClicked = useCallback((e) => setActiveBasket(e.data), []);
@@ -161,18 +177,26 @@ export default function BasketsTab() {
   const handleAddBasket = useCallback(async () => {
     if (!newName.trim()) return;
     try {
+      const payload = { name: newName.trim() };
+      // Pokud je košík sdílený, nastavíme usr_id na 0
+      if (newIsShared) {
+        payload.usr_id = 0;
+      }
+      // Jinak backend automaticky nastaví usr_id na aktuálního uživatele
+      
       await fetchJSON('/api/v1/baskets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim() }),
+        body: JSON.stringify(payload),
       });
       setNewName('');
+      setNewIsShared(false);
       setAdding(false);
       await reloadBaskets();
     } catch {
       alert(t('errorAddingBasket'));
     }
-  }, [newName, reloadBaskets, t]);
+  }, [newName, newIsShared, reloadBaskets, t]);
 
   // --- mazání košíku
   const handleDeleteBasket = useCallback(async () => {
@@ -205,6 +229,37 @@ export default function BasketsTab() {
     }
   }, [activeBasket, renameValue, reloadBaskets, t]);
 
+  // --- změna vlastnictví košíku
+  const handleUpdateOwnership = useCallback(async () => {
+    if (!activeBasket) return;
+    try {
+      await fetchJSON(`/api/v1/baskets/${activeBasket.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          usr_id: editIsShared ? 0 : user.id 
+        }),
+      });
+      setEditingOwnership(false);
+      await reloadBaskets();
+      // refresh activeBasket to reflect new ownership
+      try {
+        const all = await fetchJSON('/api/v1/baskets');
+        const found = (Array.isArray(all) ? all : (all?.items ?? [])).find(b => b.id === activeBasket.id);
+        if (found) setActiveBasket(found);
+      } catch {
+        // ignore
+      }
+      setStatus(t('ownershipUpdated'));
+    } catch (error) {
+      if (error.message.includes('403')) {
+        alert(t('errorPermissionDenied'));
+      } else {
+        alert(t('errorUpdatingOwnership'));
+      }
+    }
+  }, [activeBasket, editIsShared, user, reloadBaskets, t]);
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Toolbar */}
@@ -222,10 +277,19 @@ export default function BasketsTab() {
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter') handleAddBasket();
-                  if (e.key === 'Escape') { setAdding(false); setNewName(''); }
+                  if (e.key === 'Escape') { setAdding(false); setNewName(''); setNewIsShared(false); }
                 }}
                 style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
               />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+                <input
+                  type="checkbox"
+                  checked={newIsShared}
+                  onChange={e => setNewIsShared(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span>{t('sharedBasket')}</span>
+              </label>
               <button
                 onClick={handleAddBasket}
                 disabled={!newName.trim()}
@@ -234,7 +298,7 @@ export default function BasketsTab() {
                 {t('add')}
               </button>
               <button
-                onClick={() => { setAdding(false); setNewName(''); }}
+                onClick={() => { setAdding(false); setNewName(''); setNewIsShared(false); }}
                 style={{ padding: '6px 12px', borderRadius: 8, background: '#f3f4f6', color: '#374151', border: 'none' }}
               >
                 {t('cancel')}
@@ -378,6 +442,47 @@ export default function BasketsTab() {
               t('selectBasket')
             }
           </div>
+
+          {/* Ownership / sharing controls */}
+          {activeBasket && (
+            <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 13 }}>
+                <strong>{t('ownership')}:</strong>
+                <span style={{ marginLeft: 8, color: '#374151' }}>
+                  {(activeBasket.isShared || activeBasket.usr_id === 0) ? `🌐 ${t('shared')}` : `🔒 ${t('private')}`}
+                </span>
+              </div>
+
+              {/* Edit ownership button (only if user is owner or basket is shared) */}
+              {((activeBasket.usr_id === 0) || (activeBasket.usr_id === user?.id)) && (
+                editingOwnership ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="checkbox"
+                        checked={editIsShared}
+                        onChange={e => setEditIsShared(e.target.checked)}
+                      />
+                      <span style={{ fontSize: 13 }}>{t('shared')}</span>
+                    </label>
+                    <button
+                      onClick={handleUpdateOwnership}
+                      style={{ padding: '6px 10px', background: '#22c55e', color: '#fff', border: 'none', borderRadius: 6 }}
+                    >{t('save')}</button>
+                    <button
+                      onClick={() => { setEditingOwnership(false); setEditIsShared(false); }}
+                      style={{ padding: '6px 10px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6 }}
+                    >{t('cancel')}</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setEditingOwnership(true); setEditIsShared(activeBasket.isShared || activeBasket.usr_id === 0); }}
+                    style={{ padding: '6px 10px', background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6 }}
+                  >{t('editOwnership')}</button>
+                )
+              )}
+            </div>
+          )}
           <div className="ag-theme-quartz" style={{ height: 'calc(100% - 24px)', width: '100%' }}>
             <AgGridReact
               theme="legacy"
