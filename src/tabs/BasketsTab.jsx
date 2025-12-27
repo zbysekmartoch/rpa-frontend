@@ -101,7 +101,11 @@ export default function BasketsTab() {
       }
     },
   ]), [t]);
-  const onBasketRowClicked = useCallback((e) => setActiveBasket(e.data), []);
+  const onBasketRowClicked = useCallback((e) => {
+    setActiveBasket(e.data);
+    // Redraw rows to update active row class
+    e.api.redrawRows();
+  }, []);
 
   // --- Right grid: products in basket
   const prodCols = useMemo(() => ([

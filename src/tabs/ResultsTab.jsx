@@ -82,6 +82,8 @@ export default function ResultsTab() {
       const detail = await fetchJSON(`/api/v1/results/${id}`);
       console.debug('DETAIL /results/:id ->', detail);
       setActive(detail);
+      // Redraw rows to update active row class
+      e.api.redrawRows();
     } catch {
       setActive(null);
     }

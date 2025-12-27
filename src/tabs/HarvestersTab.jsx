@@ -134,6 +134,8 @@ export default function HarvestersTab() {
   
   const onRowClicked = useCallback((e) => {
     setActiveHarvester(e.data);
+    // Redraw rows to update active row class
+    e.api.redrawRows();
   }, []);
 
   // Delete harvester

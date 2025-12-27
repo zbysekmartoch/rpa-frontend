@@ -223,6 +223,8 @@ export default function HarvestScheduleTab() {
       datasource_id: e.data.datasource_id || '',
       cron_expression: e.data.cron_expression || ''
     });
+    // Redraw rows to update active row class
+    e.api.redrawRows();
   }, []);
 
   // Add harvest schedule

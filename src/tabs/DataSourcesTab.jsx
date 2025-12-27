@@ -62,6 +62,8 @@ export default function DataSourcesTab() {
       ...e.data,
       urls: Array.isArray(e.data.urls) ? e.data.urls.join('\n') : (e.data.urls || '')
     });
+    // Redraw rows to update active row class
+    e.api.redrawRows();
   }, []);
 
   // Add data source

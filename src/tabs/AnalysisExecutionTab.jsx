@@ -118,6 +118,8 @@ export default function AnalysisExecutionTab() {
       setActive(detail);
       setDraftName(detail.name || '');
       setDraftSettings(detail.settings || {});
+      // Redraw rows to update active row class
+      e.api.redrawRows();
     } catch {
       setActive(null);
       setDraftName('');
