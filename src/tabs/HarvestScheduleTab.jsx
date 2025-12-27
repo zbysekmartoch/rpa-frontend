@@ -223,9 +223,14 @@ export default function HarvestScheduleTab() {
       datasource_id: e.data.datasource_id || '',
       cron_expression: e.data.cron_expression || ''
     });
-    // Redraw rows to update active row class
-    e.api.redrawRows();
   }, []);
+  
+  // Redraw rows when active schedule changes to update row styling
+  useEffect(() => {
+    if (leftRef.current?.api) {
+      leftRef.current.api.redrawRows();
+    }
+  }, [activeSchedule]);
 
   // Add harvest schedule
   const handleAdd = useCallback(async () => {

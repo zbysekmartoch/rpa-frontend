@@ -48,19 +48,19 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
     <div>
       <div
         style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px',
+          display: 'flex', alignItems: 'center', gap: 8, padding: '2px 6px',
           borderRadius: 8, cursor: 'default', paddingLeft: depth * 16,
           background: isActive ? '#eef2ff' : 'transparent'
         }}
       >
-        <button
+        <div
           onClick={() => hasChildren && setOpen(o => !o)}
           disabled={!hasChildren}
           title={hasChildren ? (open ? 'Collapse' : 'Expand') : 'No subcategories'}
           style={{ width: 20, height: 20, border: 'none', background: 'transparent' }}
         >
           {hasChildren ? (open ? '▾' : '▸') : '•'}
-        </button>
+        </div>
 
         <input
           type="checkbox"
@@ -70,7 +70,7 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
           title="Select category (subtree will be included in query)"
         />
 
-        <button
+        <div
           onClick={() => onActivate(node.path)}
           title={node.path}
           style={{
@@ -86,7 +86,7 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
           }}
         >
           {node.name} <span style={{ color: '#6b7280' }}>({node.productCount})</span>
-        </button>
+        </div>
       </div>
 
       {open && hasChildren && (

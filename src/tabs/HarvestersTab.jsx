@@ -134,9 +134,14 @@ export default function HarvestersTab() {
   
   const onRowClicked = useCallback((e) => {
     setActiveHarvester(e.data);
-    // Redraw rows to update active row class
-    e.api.redrawRows();
   }, []);
+  
+  // Redraw rows when active harvester changes to update row styling
+  useEffect(() => {
+    if (leftRef.current?.api) {
+      leftRef.current.api.redrawRows();
+    }
+  }, [activeHarvester]);
 
   // Delete harvester
   const handleDelete = useCallback(async () => {

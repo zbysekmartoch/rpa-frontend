@@ -118,14 +118,19 @@ export default function AnalysisExecutionTab() {
       setActive(detail);
       setDraftName(detail.name || '');
       setDraftSettings(detail.settings || {});
-      // Redraw rows to update active row class
-      e.api.redrawRows();
     } catch {
       setActive(null);
       setDraftName('');
       setDraftSettings({});
     }
   };
+  
+  // Redraw rows when active analysis changes to update row styling
+  useEffect(() => {
+    if (leftRef.current?.api) {
+      leftRef.current.api.redrawRows();
+    }
+  }, [active]);
 
   // Left grid columns
   const cols = useMemo(() => ([

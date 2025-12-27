@@ -103,9 +103,14 @@ export default function BasketsTab() {
   ]), [t]);
   const onBasketRowClicked = useCallback((e) => {
     setActiveBasket(e.data);
-    // Redraw rows to update active row class
-    e.api.redrawRows();
   }, []);
+  
+  // Redraw rows when active basket changes to update row styling
+  useEffect(() => {
+    if (leftRef.current?.api) {
+      leftRef.current.api.redrawRows();
+    }
+  }, [activeBasket]);
 
   // --- Right grid: products in basket
   const prodCols = useMemo(() => ([
