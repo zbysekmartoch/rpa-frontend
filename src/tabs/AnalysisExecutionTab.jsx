@@ -1,3 +1,7 @@
+/**
+ * Analysis Execution Tab
+ * Configure and run analyses with form-based or JSON settings editor
+ */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import Form from '@rjsf/mui';
@@ -6,8 +10,9 @@ import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
 import { getAnalysisSettingsSchema, getAnalysisSettingsUiSchema } from '../schemas/analysisSettings.js';
 import WorkflowSelector from '../components/WorkflowSelector.jsx';
+import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 
-// Volitelně jednoduchý JSON editor (nahradíš za jsoneditor/Monaco, pokud chceš)
+// Optional simple JSON editor (can be replaced with jsoneditor/Monaco if needed)
 function JsonTextarea({ value, onChange }) {
   const [text, setText] = useState(() => JSON.stringify(value ?? {}, null, 2));
   useEffect(() => { setText(JSON.stringify(value ?? {}, null, 2)); }, [value]);
@@ -23,16 +28,16 @@ function JsonTextarea({ value, onChange }) {
   );
 }
 
-// Komponenta pro podzáložku "Provádění analýz"
+// Component for "Analysis Execution" sub-tab
 export default function AnalysisExecutionTab() {
   const { t, language } = useLanguage();
   
-  // Levý grid: analýzy
+  // Left grid: analyses list
   const [rows, setRows] = useState([]);
   const [active, setActive] = useState(null); // {id, name, settings, schema?}
   const leftRef = useRef(null);
 
-  // Pravý panel – režim zobrazení
+  // Right panel - display mode
   const [mode, setMode] = useState('form'); // 'form' | 'json'
   const [draftName, setDraftName] = useState('');
   const [draftSettings, setDraftSettings] = useState({});
@@ -42,18 +47,18 @@ export default function AnalysisExecutionTab() {
 
   const [baskets, setBaskets] = useState([]);
 
-  // Načtení seznamu košíků
+  // Load baskets list
   useEffect(() => {
     fetchJSON('/api/v1/baskets')
       .then(data => setBaskets(data.items || []))
       .catch(() => setBaskets([]));
   }, []);
 
-  // Dynamické schéma podle jazyka
+  // Dynamic schema based on language
   const baseSchema = useMemo(() => getAnalysisSettingsSchema(language), [language]);
   const baseUiSchema = useMemo(() => getAnalysisSettingsUiSchema(language), [language]);
 
-  // Dynamické schéma pro select košíků
+  // Dynamic schema for basket select
   const schema = useMemo(() => {
     if (!baskets.length) return active?.schema ?? baseSchema;
     const base = { ...(active?.schema ?? baseSchema) };
@@ -70,7 +75,7 @@ export default function AnalysisExecutionTab() {
     };
   }, [baskets, active, baseSchema]);
 
-  // Dynamické uiSchema pro select košíků
+  // Dynamic uiSchema for basket select
   const uiSchema = useMemo(() => {
     if (!baskets.length) return baseUiSchema;
     return {
@@ -93,7 +98,7 @@ export default function AnalysisExecutionTab() {
     WorkflowWidget: WorkflowSelector
   }), []);
 
-  // Načtení seznamu
+  // Load analyses list
   useEffect(() => {
     fetchJSON('/api/v1/analyses')
       .then(d => {
@@ -103,7 +108,7 @@ export default function AnalysisExecutionTab() {
       .catch(() => setRows([]));
   }, []);
 
-  // Klik na řádek → stáhni detail (settings, schema)
+  // Row click -> fetch detail (settings, schema)
   const onRowClicked = async (e) => {
     const id = e.data.id;
     
@@ -120,15 +125,14 @@ export default function AnalysisExecutionTab() {
     }
   };
 
-  // Sloupce levého gridu
+  // Left grid columns
   const cols = useMemo(() => ([
     { headerName: t('id'), field: 'id', width: 90 },
     { headerName: t('name'), field: 'name', flex: 1, minWidth: 220 },
     { headerName: t('created'), field: 'created_at', width: 170 },
   ]), [t]);
-  const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);
 
-  // Cross-field validace pro datumy
+  // Cross-field validation for dates
   const customValidate = (formData, errors) => {
     const { dateFrom, dateTo } = formData || {};
     if (dateFrom && dateTo && dateFrom > dateTo) {
@@ -137,17 +141,20 @@ export default function AnalysisExecutionTab() {
     return errors;
   };
 
-  // Uložení z formuláře
+  // Save from form
   const handleSubmit = async ({ formData }) => {
     if (!active?.id) return;
     try {
       await fetch(`/api/v1/analyses/${active.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
         body: JSON.stringify({ name: draftName, settings: formData }),
       }).then(r => { if (!r.ok) throw new Error(`${r.status}`); });
 
-      // refresh seznamu + detailu
+      // Refresh list and detail
       const d = await fetchJSON('/api/v1/analyses');
       setRows(d.items || []);
       const detail = await fetchJSON(`/api/v1/analyses/${active.id}`);
@@ -160,13 +167,16 @@ export default function AnalysisExecutionTab() {
     }
   };
 
-  // Uložení z JSON editoru
+  // Save from JSON editor
   const handleSaveJson = async () => {
     if (!active?.id) return;
     try {
       await fetch(`/api/v1/analyses/${active.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
         body: JSON.stringify({ name: draftName, settings: draftSettings }),
       }).then(r => { if (!r.ok) throw new Error(`${r.status}`); });
 
@@ -182,7 +192,7 @@ export default function AnalysisExecutionTab() {
     }
   };
 
-  // Přidání nové analýzy
+  // Add new analysis
   const handleAdd = async () => {
     if (!newName.trim()) return;
     try {
@@ -214,14 +224,14 @@ export default function AnalysisExecutionTab() {
 
   return (
     <div style={{ height: '100%', display: 'flex', gap: 12 }}>
-      {/* LEFT: seznam analýz */}
+      {/* LEFT: analyses list */}
       <section
         style={{
-          width: 420, minWidth: 360, height: '100%',
+          width: 420, minWidth: 360,  height: 'calc(100% - 20px)' ,
           border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
         }}
       >
-        {/* Přidat analýzu */}
+        {/* Add analysis */}
         <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
           {adding ? (
             <>
@@ -238,23 +248,23 @@ export default function AnalysisExecutionTab() {
                 style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
               />
               <button
+                className="btn btn-add"
                 onClick={handleAdd}
                 disabled={!newName.trim()}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
               >
                 {t('add')}
               </button>
               <button
+                className="btn btn-cancel"
                 onClick={() => { setAdding(false); setNewName(''); }}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#f3f4f6', color: '#374151', border: 'none' }}
               >
                 {t('cancel')}
               </button>
             </>
           ) : (
             <button
+              className="btn btn-add"
               onClick={() => setAdding(true)}
-              style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
               title={t('addAnalysisTooltip')}
             >
               + {t('addAnalysis')}
@@ -262,26 +272,24 @@ export default function AnalysisExecutionTab() {
           )}
         </div>
 
-        <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+        <div className="ag-theme-quartz" style={{...getGridContainerStyle(),height: 'calc(100% - 40px)' }}>
           <AgGridReact
-            theme="legacy"
+            {...commonGridProps}
             ref={leftRef}
             rowData={rows}
             columnDefs={cols}
             defaultColDef={defaultColDef}
-            animateRows={false}
-            headerHeight={36}
-            domLayout="normal"
             rowSelection={{ mode: 'singleRow' }}
             onRowClicked={onRowClicked}
+            tooltipShowDelay={300}
           />
         </div>
       </section>
 
-      {/* RIGHT: editor konfigurace */}
+      {/* RIGHT: configuration editor */}
       <section
         style={{
-          flex: 1, minWidth: 0, minHeight: 0, height: '100%',
+          flex: 1, minWidth: 0, minHeight: 0, height: 'calc(100% - 20px)',
           border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, background: '#fff', display: 'flex', flexDirection: 'column'
         }}
       >
@@ -308,17 +316,10 @@ export default function AnalysisExecutionTab() {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button
+              className="btn btn-primary"
               type="button"
               onClick={handleRun}
               disabled={!active}
-              style={{ 
-                padding: '6px 16px', 
-                background: !active ? '#a7f3d0' : '#059669', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: 4,
-                cursor: !active ? 'not-allowed' : 'pointer'
-              }}
               title={t('runAnalysisTooltip')}
             >
               {t('runAnalysis')}
@@ -326,31 +327,17 @@ export default function AnalysisExecutionTab() {
 
             {mode === 'form' ? (
               <button
+                className="btn btn-edit"
                 onClick={() => document.getElementById('analysis-rjsf-save')?.click()}
                 disabled={!active}
-                style={{ 
-                  padding: '6px 12px', 
-                  border: '1px solid #2563eb', 
-                  background: !active ? '#dbeafe' : '#2563eb', 
-                  color: '#fff', 
-                  borderRadius: 8, 
-                  cursor: active ? 'pointer' : 'not-allowed' 
-                }}
               >
                 {t('save')}
               </button>
             ) : (
               <button
+                className="btn btn-edit"
                 onClick={handleSaveJson}
                 disabled={!active}
-                style={{ 
-                  padding: '6px 12px', 
-                  border: '1px solid #2563eb', 
-                  background: !active ? '#dbeafe' : '#2563eb', 
-                  color: '#fff', 
-                  borderRadius: 8, 
-                  cursor: active ? 'pointer' : 'not-allowed' 
-                }}
               >
                 {t('saveJson')}
               </button>

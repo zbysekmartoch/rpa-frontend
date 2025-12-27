@@ -1,3 +1,9 @@
+/**
+ * Language Context Provider
+ * Provides internationalization (i18n) support for the application.
+ * Handles language detection, storage, and translation functions.
+ * Supports Czech (cz), Slovak (sk), and English (en) languages.
+ */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { translations } from '../i18n/translations.js';
 
@@ -9,30 +15,30 @@ export const useLanguage = () => {
   return context;
 };
 
-// Funkce pro detekci jazyka prohlížeče
+// Function for detecting browser language
 const detectBrowserLanguage = () => {
-  // Získání jazyka prohlížeče
+  // Get browser language
   const browserLang = navigator.language || navigator.userLanguage;
   const langCode = browserLang.toLowerCase();
   
-  // Mapování jazyků prohlížeče na naše kódy
+  // Map browser languages to our language codes
   if (langCode.startsWith('cs') || langCode.startsWith('cz')) return 'cz';
   if (langCode.startsWith('sk')) return 'sk';
   if (langCode.startsWith('en')) return 'en';
   
-  // Fallback na češtinu
+  // Fallback to English
   return 'en';
 };
 
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    // 1. Zkus načíst z localStorage
+    // 1. Try to load from localStorage
     const savedLanguage = localStorage.getItem('language');
     if (savedLanguage && ['cz', 'sk', 'en'].includes(savedLanguage)) {
       return savedLanguage;
     }
     
-    // 2. Pokud není uložený, detekuj z prohlížeče
+    // 2. If not saved, detect from browser
     return detectBrowserLanguage();
   });
 
@@ -43,7 +49,7 @@ export const LanguageProvider = ({ children }) => {
   const t = (key, params = {}) => {
     let text = translations[language]?.[key] || translations.cz[key] || key;
     
-    // Interpolace parametrů {param}
+    // Interpolate parameters {param}
     if (params && typeof params === 'object') {
       Object.keys(params).forEach(param => {
         text = text.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);

@@ -1,6 +1,11 @@
+/**
+ * Data Sources Tab
+ * Manage data sources with URL configurations for harvesting
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
+import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 
 export default function DataSourcesTab() {
   const [dataSources, setDataSources] = useState([]);
@@ -50,7 +55,6 @@ export default function DataSourcesTab() {
     },
   ]), []);
   
-  const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);
   const onRowClicked = useCallback((e) => {
     setActiveSource(e.data);
     // Convert urls array to string for editing
@@ -123,7 +127,7 @@ export default function DataSourcesTab() {
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 12px' }}>
         <div style={{ fontSize: 18, fontWeight: 600 }}>Data Sources</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 , paddingTop: 4 }}>
           {/* Add data source */}
           {adding ? (
             <>
@@ -140,39 +144,32 @@ export default function DataSourcesTab() {
                 style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 150 }}
               />
               <button
+                className="btn btn-add"
                 onClick={handleAdd}
                 disabled={!newName.trim()}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
               >
                 Add
               </button>
               <button
+                className="btn btn-cancel"
                 onClick={() => { setAdding(false); setNewName(''); }}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#f3f4f6', color: '#374151', border: 'none' }}
               >
                 Cancel
               </button>
             </>
           ) : (
             <button
+              className="btn btn-add"
               onClick={() => setAdding(true)}
-              style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
             >
               + Add Data Source
             </button>
           )}
           
           <button
+            className="btn btn-delete"
             onClick={handleDelete}
             disabled={!activeSource}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #dc2626',
-              background: !activeSource ? '#fecaca' : '#dc2626',
-              color: '#fff',
-              borderRadius: 8,
-              cursor: !activeSource ? 'not-allowed' : 'pointer'
-            }}
           >
             Delete
           </button>
@@ -184,26 +181,24 @@ export default function DataSourcesTab() {
       </div>
 
       {/* Two columns: data sources list | details */}
-      <div style={{ height: 'calc(100% - 40px)', display: 'flex', gap: 12, padding: '0 12px' }}>
+      <div style={{ height: 'calc(100% - 50px)', display: 'flex', gap: 12, padding: '0 12px' }}>
         {/* LEFT - Data sources list */}
         <section
           style={{
             width: 700, minWidth: 600, height: '100%',
-            border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
+      //      border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
           }}
         >
-          <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+          <div className="ag-theme-quartz" style={getGridContainerStyle()}>
             <AgGridReact
-              theme="legacy"
+              {...commonGridProps}
               ref={leftRef}
               rowData={dataSources}
               columnDefs={cols}
               defaultColDef={defaultColDef}
-              animateRows={false}
-              headerHeight={36}
-              domLayout="normal"
               rowSelection={{ mode: 'singleRow' }}
               onRowClicked={onRowClicked}
+              tooltipShowDelay={300}
             />
           </div>
         </section>
@@ -211,7 +206,7 @@ export default function DataSourcesTab() {
         {/* RIGHT - Data source details */}
         <section
           style={{
-            flex: 1, minWidth: 0, minHeight: 0, height: '100%',
+            flex: 1, minWidth: 0, minHeight: 0, height: 'calc(100% - 34px)',
             border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#fff'
           }}
         >
@@ -222,14 +217,8 @@ export default function DataSourcesTab() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ margin: 0 }}>Data Source Details</h3>
                 <button
+                  className={editing ? "btn btn-warning" : "btn btn-edit"}
                   onClick={() => setEditing(!editing)}
-                  style={{
-                    padding: '6px 12px',
-                    background: editing ? '#f59e0b' : '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 4
-                  }}
                 >
                   {editing ? 'View' : 'Edit'}
                 </button>
@@ -257,15 +246,9 @@ export default function DataSourcesTab() {
                     />
                   </div>
                   <button
+                    className="btn btn-add"
                     onClick={handleUpdate}
-                    style={{
-                      alignSelf: 'flex-start',
-                      padding: '8px 16px',
-                      background: '#22c55e',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 4
-                    }}
+                    style={{ alignSelf: 'flex-start' }}
                   >
                     Save Changes
                   </button>

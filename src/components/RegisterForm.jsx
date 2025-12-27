@@ -26,7 +26,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
     setSuccess('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Hesla se neshodují'); // TODO: přidat do translations
+      setError(t('passwordsDoNotMatch') || 'Passwords do not match');
       return;
     }
 
@@ -38,10 +38,10 @@ export default function RegisterForm({ onSwitchToLogin }) {
         email: formData.email,
         password: formData.password
       });
-      setSuccess('Registrace byla úspěšná! Můžete se přihlásit.'); // TODO: přidat do translations
+      setSuccess(t('registrationSuccessful') || 'Registration successful! You can now log in.');
       setTimeout(() => onSwitchToLogin(), 2000);
     } catch (err) {
-      let errorMessage = 'Registrace selhala'; // TODO: přidat do translations
+      let errorMessage = t('registrationFailed') || 'Registration failed';
       
       if (err.body) {
         try {
@@ -50,7 +50,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             errorMessage = errorData.error;
           }
         } catch {
-          // Pokud parsing selže, použijeme fallback
+          // If parsing fails, use fallback
         }
       }
       
@@ -137,18 +137,10 @@ export default function RegisterForm({ onSwitchToLogin }) {
       </div>
 
       <button
+        className="btn btn-add"
         type="submit"
         disabled={loading}
-        style={{
-          width: '100%',
-          padding: 12,
-          background: loading ? '#9ca3af' : '#22c55e',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          fontSize: 16
-        }}
+        style={{ width: '100%', padding: 12, fontSize: 16 }}
       >
         {loading ? t('loading') : t('registerButton')}
       </button>

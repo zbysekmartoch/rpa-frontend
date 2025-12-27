@@ -8,7 +8,7 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToReset }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const { t } = useLanguage(); // <- přidáno
+  const { t } = useLanguage();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,8 +18,8 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToReset }) {
     try {
       await login(email, password);
     } catch (err) {
-      // Pokusíme se extrahovat error z JSON odpovědi
-      let errorMessage = t('loginFailed'); // <- lokalizováno
+      // Try to extract error from JSON response
+      let errorMessage = t('loginFailed');
       
       if (err.body) {
         try {
@@ -28,7 +28,7 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToReset }) {
             errorMessage = errorData.error;
           }
         } catch {
-          // Pokud parsing selže, použijeme fallback
+          // If parsing fails, use fallback
         }
       }
       
@@ -71,18 +71,10 @@ export default function LoginForm({ onSwitchToRegister, onSwitchToReset }) {
       </div>
 
       <button
+        className="btn btn-primary"
         type="submit"
         disabled={loading}
-        style={{
-          width: '100%',
-          padding: 12,
-          background: loading ? '#9ca3af' : '#3b82f6',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          fontSize: 16
-        }}
+        style={{ width: '100%', padding: 12, fontSize: 16 }}
       >
         {loading ? t('loggingIn') : t('loginButton')}
       </button>

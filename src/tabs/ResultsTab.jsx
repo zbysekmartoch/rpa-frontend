@@ -1,17 +1,24 @@
+/**
+ * Results Tab Component
+ * Displays analysis results in a dual-panel layout.
+ * Left panel shows list of results, right panel shows details of selected result.
+ * Supports result deletion, file downloads, and status display.
+ */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
+import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 
 export default function ResultsTab() {
   const { t } = useLanguage();
 
-  // Levý grid: výsledky
+  // Left grid: results
   const [rows, setRows] = useState([]);
   const [active, setActive] = useState(null);
   const leftRef = useRef(null);
 
-  // Načtení seznamu
+  // Load results list
   const loadResults = async () => {
     try {
       const d = await fetchJSON('/api/v1/results');
@@ -26,23 +33,23 @@ export default function ResultsTab() {
     loadResults();
   }, []);
 
-  // Smazání vybraných výsledků
+  // Delete selected results
   const handleDelete = async () => {
     const selectedNodes = leftRef.current?.api?.getSelectedNodes();
     if (!selectedNodes || selectedNodes.length === 0) {
-      alert(t('noResultsSelected') || 'Nejsou vybrány žádné výsledky');
+      alert(t('noResultsSelected') || 'No results selected');
       return;
     }
 
     const selectedIds = selectedNodes.map(node => node.data.id);
     const confirmMessage = selectedIds.length === 1
-      ? (t('confirmDeleteResult') || `Opravdu smazat výsledek?`)
-      : (t('confirmDeleteResults') || `Opravdu smazat ${selectedIds.length} výsledků?`);
+      ? (t('confirmDeleteResult') || 'Really delete result?')
+      : (t('confirmDeleteResults') || `Really delete ${selectedIds.length} results?`);
 
     if (!confirm(confirmMessage)) return;
 
     try {
-      // Smažeme všechny vybrané výsledky
+      // Delete all selected results
       await Promise.all(
         selectedIds.map(id =>
           fetch(`/api/v1/results/${id}`, {
@@ -54,21 +61,21 @@ export default function ResultsTab() {
         )
       );
 
-      // Pokud byl smazán aktivní výsledek, zrušíme detail
+      // If active result was deleted, clear detail view
       if (active && selectedIds.includes(active.id)) {
         setActive(null);
       }
 
-      // Znovu načteme seznam
+      // Reload results list
       await loadResults();
-      alert(t('resultsDeleted') || 'Výsledky smazány');
+      alert(t('resultsDeleted') || 'Results deleted');
     } catch (error) {
       console.error('Error deleting results:', error);
-      alert(t('errorDeletingResults') || 'Chyba při mazání výsledků');
+      alert(t('errorDeletingResults') || 'Error deleting results');
     }
   };
 
-  // Klik na řádek → stáhni detail
+  // Row click -> fetch detail
   const onRowClicked = async (e) => {
     const id = e.data.id;
     try {
@@ -80,16 +87,15 @@ export default function ResultsTab() {
     }
   };
 
-  // Sloupce levého gridu
+  // Left grid columns
   const cols = useMemo(() => ([
     { headerName: t('id'), field: 'id', width: 90 },
     { headerName: t('analysisName'), field: 'analysisName', flex: 1, minWidth: 220 },
     { headerName: t('status'), field: 'status', width: 120 },
     { headerName: t('created'), field: 'created_at', width: 170 },
   ]), [t]);
-  const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);
 
-  // Funkce pro lokalizovaný status
+  // Function for localized status display
   const getStatusDisplay = (status) => {
     const statusMap = {
       'completed': t('statusCompleted'),
@@ -100,7 +106,7 @@ export default function ResultsTab() {
     return statusMap[status] || status;
   };
 
-  // Funkce pro barvu statusu
+  // Function for status color
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
@@ -117,8 +123,8 @@ export default function ResultsTab() {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', gap: 12 }}>
-      {/* LEFT: seznam výsledků */}
+    <div style={{ height: 'calc(100% - 20px)' , display: 'flex', gap: 12 }}>
+      {/* LEFT: results list */}
       <section
         style={{
           width: 600, minWidth: 500, height: '100%',
@@ -126,42 +132,32 @@ export default function ResultsTab() {
           overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column'
         }}
       >
-        {/* Tlačítko pro mazání */}
+        {/* Delete button */}
         <div style={{ marginBottom: 8 }}>
           <button
+            className="btn btn-delete"
             onClick={handleDelete}
-            style={{
-              padding: '6px 12px',
-              background: '#ef4444',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-            title={t('deleteSelectedResults') || 'Smazat vybrané výsledky'}
+            title={t('deleteSelectedResults') || 'Delete selected results'}
           >
-            🗑 {t('deleteSelected') || 'Smazat vybrané'}
+            🗑 {t('deleteSelected') || 'Delete selected'}
           </button>
         </div>
 
-        <div className="ag-theme-quartz" style={{ flex: 1, width: '100%' }}>
+        <div className="ag-theme-quartz" style={getGridContainerStyle({ flex: 1 })}>
           <AgGridReact
-            theme="legacy"
+            {...commonGridProps}
             ref={leftRef}
             rowData={rows}
             columnDefs={cols}
             defaultColDef={defaultColDef}
-            animateRows={false}
-            headerHeight={36}
-            domLayout="normal"
             rowSelection={{ mode: 'multiRow' }}
             onRowClicked={onRowClicked}
+            tooltipShowDelay={300}
           />
         </div>
       </section>
 
-      {/* RIGHT: detail výsledku */}
+      {/* RIGHT: result detail */}
       <section
         style={{
           flex: 1, minWidth: 0, minHeight: 0, height: '100%',
@@ -184,14 +180,14 @@ export default function ResultsTab() {
               <div style={{ 
                 padding: '4px 12px',
                 ...getStatusColor(active.status),
-                borderRadius: 4,
+                borderRadius: 0,
                 display: 'inline-block'
               }}>
                 {getStatusDisplay(active.status)}
               </div>
             </div>
 
-            {/* Link na stažení - nyní pro všechny analýzy */}
+            {/* Download link - now for all analyses */}
             {active && (
               <div>
                 <label style={{ color: '#4b5563', display: 'block', marginBottom: 4 }}>
@@ -215,11 +211,11 @@ export default function ResultsTab() {
               </div>
             )}
 
-            {/* Seznam jednotlivých souborů ke stažení */}
+            {/* List of individual files to download */}
             {active.files && active.files.length > 0 && (
               <div>
                 <label style={{ color: '#4b5563', display: 'block', marginBottom: 8 }}>
-                  {t('resultFiles') || 'Soubory výsledku'}
+                  {t('resultFiles') || 'Result files'}
                 </label>
                 <div style={{
                   display: 'flex',
@@ -315,7 +311,7 @@ export default function ResultsTab() {
               </div>
             )}
 
-            {/* Další informace o výsledku */}
+            {/* Additional result information */}
             {active.created_at && (
               <div>
                 <label style={{ color: '#4b5563', display: 'block', marginBottom: 4 }}>

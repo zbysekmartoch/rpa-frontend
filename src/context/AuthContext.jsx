@@ -1,8 +1,24 @@
+/**
+ * Authentication Context
+ * 
+ * Provides authentication state and methods throughout the application:
+ * - user: Current authenticated user object
+ * - login/logout: Authentication methods
+ * - register: New user registration
+ * - resetPassword: Password reset functionality
+ * - isAuthenticated: Boolean flag for auth status
+ * 
+ * Uses JWT tokens stored in localStorage for session persistence.
+ */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 
 const AuthContext = createContext();
 
+/**
+ * Hook to access authentication context
+ * Must be used within an AuthProvider
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within AuthProvider');
@@ -13,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Zkontroluj při načtení, zda je uživatel přihlášen
+  // Check authentication status on mount using stored token
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
@@ -26,6 +42,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  /**
+   * Authenticate user with email and password
+   * Stores JWT token in localStorage on success
+   */
   const login = async (email, password) => {
     const response = await fetchJSON('/api/v1/auth/login', {
       method: 'POST',
@@ -69,7 +89,7 @@ export const AuthProvider = ({ children }) => {
 
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      Načítání...
+      Loading...
     </div>;
   }
 

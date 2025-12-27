@@ -1,5 +1,13 @@
-// src/tabs/ProductsTab.jsx
-import React, { useEffect, useState } from 'react';
+/**
+ * Products Tab Component
+ * 
+ * Main product catalog browser with:
+ * - Category tree navigation (left panel)
+ * - Product grid with filtering, sorting, and selection (right panel)
+ * - Add to basket functionality
+ * - Display modes: active category or selected categories
+ */
+import React, { useCallback, useEffect, useState } from 'react';
 import { CategoryTree } from '../components/CategoryTree.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 import { fetchJSON } from '../lib/fetchJSON.js';
@@ -8,30 +16,43 @@ import { useLanguage } from '../context/LanguageContext';
 export default function ProductsTab() {
   const { t } = useLanguage();
   
-  // UI stav
+  // UI state
   const [mode, setMode] = useState('active');     // 'active' | 'selected'
   const [activePath, setActivePath] = useState('');
   const [selectedPaths, setSelectedPaths] = useState([]);
 
-  // počty z gridu (zobrazí se vpravo nahoře)
+  // Grid counts displayed in toolbar
   const [displayedCount, setDisplayedCount] = useState(0);
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState([]);
 
+  // Load available baskets for target selection
   useEffect(() => {
     fetchJSON('/api/v1/baskets')
       .then(d => setBaskets(d.items || []))
       .catch(() => setBaskets([]));
   }, []);
 
-  // 🔹 košíky pro výběr cíle
+  // Basket selection for adding products
   const [baskets, setBaskets] = useState([]);
   const [targetBasketId, setTargetBasketId] = useState('');
 
+  // Toggle category path in selected paths list
   const onTogglePath = (path) => {
     setSelectedPaths(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
   };
 
+  // Memoized callbacks for ProductGrid - prevents unnecessary re-renders
+  const handleCountsChange = useCallback(({ displayed, selected }) => {
+    setDisplayedCount(displayed);
+    setSelectedCount(selected);
+  }, []);
+
+  const handleSelectionIdsChange = useCallback((ids) => {
+    setSelectedIds(ids);
+  }, []);
+
+  // Add selected products to target basket
   const handleAddToBasket = async () => {
     const bid = Number(targetBasketId);
     if (!bid) { alert(t('selectTargetBasket')); return; }
@@ -40,13 +61,16 @@ export default function ProductsTab() {
     try {
       await fetch(`/api/v1/baskets/${bid}/products`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
         body: JSON.stringify({ productIds: selectedIds }),
       }).then(r => {
         if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
       });
       alert(t('productsAddedToBasket', { count: selectedIds.length }));
-      // nic dalšího dělat nemusíme; v Baskets tabu se to načte při otevření
+      // No further action needed; Baskets tab will reload data when opened
     } catch (e) {
       console.error(e);
       alert(t('errorAddingToBasket'));
@@ -54,7 +78,7 @@ export default function ProductsTab() {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: 'calc(100% - 50px)', display: 'flex', flexDirection: 'column' }}>
       {/* Toolbar s přepínačem módu + počty */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -70,10 +94,10 @@ export default function ProductsTab() {
             </select>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <span style={{ fontSize: 13, color: '#374151', background: '#f3f4f6', padding: '4px 8px', borderRadius: 8 }}>
+            <span style={{ fontSize: 13, color: '#374151', background: '#eef2ff', padding: '4px 8px' }}>
               {t('displayed')}: <b>{displayedCount}</b>
             </span>
-            <span style={{ fontSize: 13, color: '#374151', background: '#eef2ff', padding: '4px 8px', borderRadius: 8 }}>
+            <span style={{ fontSize: 13, color: '#374151', background: '#eef2ff', padding: '4px 8px' }}>
               {t('selected')}: <b>{selectedCount}</b>
             </span>
 
@@ -91,14 +115,9 @@ export default function ProductsTab() {
               </select>
 
               <button
+                className="btn btn-add"
                 onClick={handleAddToBasket}
                 disabled={!targetBasketId || selectedIds.length === 0}
-                style={{
-                  padding: '6px 12px',
-                  border: '1px solid #16a34a', color: '#fff',
-                  background: !targetBasketId || selectedIds.length === 0 ? '#a7f3d0' : '#16a34a',
-                  borderRadius: 8, cursor: !targetBasketId || selectedIds.length === 0 ? 'not-allowed' : 'pointer'
-                }}
                 title={t('addToBasketTooltip')}
               >
                 {t('addToBasket')}
@@ -109,10 +128,10 @@ export default function ProductsTab() {
       </div>
 
       {/* Dvousloupcový layout: strom vlevo, grid vpravo */}
-      <div style={{ height: 'calc(100% - 40px)', display: 'flex', gap: 12 }}>
+      <div style={{ height: 'calc(100% - 00px)', display: 'flex', gap: 12 }}>
         <aside
           style={{
-            width: 340, minWidth: 300, maxWidth: 420, height: '100%',
+            width: 340, minWidth: 300, maxWidth: 420, height: 'calc(100% - 20px)',
             overflow: 'auto', border: '1px solid #e5e7eb', padding: 10,
             background: '#fff'
           }}
@@ -130,7 +149,7 @@ export default function ProductsTab() {
         <section
           style={{
             flex: 1, minWidth: 0, minHeight: 0, height: '100%',
-            border: '1px solid #e5e7eb', padding: 0,
+          //  border: '1px solid #e5e7eb', padding: 0,
             background: '#fff', overflow: 'hidden'
           }}
         >
@@ -138,11 +157,8 @@ export default function ProductsTab() {
             mode={mode}
             activePath={activePath}
             selectedPaths={selectedPaths}
-            onCountsChange={({ displayed, selected }) => {
-              setDisplayedCount(displayed);
-              setSelectedCount(selected);
-            }}
-            onSelectionIdsChange={setSelectedIds}
+            onCountsChange={handleCountsChange}
+            onSelectionIdsChange={handleSelectionIdsChange}
           />
         </section>
       </div>

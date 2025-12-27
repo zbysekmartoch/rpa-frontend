@@ -1,3 +1,9 @@
+/**
+ * Settings Context Provider
+ * Manages application-wide user preferences and settings.
+ * Currently handles the advanced UI toggle for showing/hiding advanced features.
+ * Settings are persisted to localStorage.
+ */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const SettingsContext = createContext();

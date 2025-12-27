@@ -1,3 +1,7 @@
+/**
+ * Settings Tab
+ * User preferences including language selection and UI options
+ */
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSettings } from '../context/SettingsContext';

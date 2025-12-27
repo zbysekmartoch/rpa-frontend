@@ -22,7 +22,7 @@ export default function ProductTable({ mode, activePath, selectedPaths, onActive
   const [columnSizing, setColumnSizing] = useState({});
   const [columnSizingInfo, setColumnSizingInfo] = useState({});
 
-  // stáhni větší balík dat, bez pagination
+  // Fetch larger data batch without pagination
   useEffect(() => {
     const cats = mode === 'active' ? (activePath ? [activePath] : []) : selectedPaths;
     if (cats.length === 0) { setData([]); setError(null); return; }
@@ -125,7 +125,7 @@ export default function ProductTable({ mode, activePath, selectedPaths, onActive
     onSortingChange: setSorting,
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
-    columnResizeMode: 'onChange', // plynulé resize
+    columnResizeMode: 'onChange', // Smooth resize
     enableRowSelection: true,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

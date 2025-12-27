@@ -18,9 +18,9 @@ export default function ResetPasswordForm({ onSwitchToLogin }) {
 
     try {
       await resetPassword(email);
-      setSuccess('Pokyny pro obnovení hesla byly odeslány na váš e-mail.'); // TODO: přidat do translations
+      setSuccess(t('resetPasswordEmailSent') || 'Password reset instructions have been sent to your email.');
     } catch (err) {
-      let errorMessage = 'Odeslání selhalo'; // TODO: přidat do translations
+      let errorMessage = t('resetPasswordFailed') || 'Failed to send reset email';
       
       if (err.body) {
         try {
@@ -29,7 +29,7 @@ export default function ResetPasswordForm({ onSwitchToLogin }) {
             errorMessage = errorData.error;
           }
         } catch {
-          // Pokud parsing selže, použijeme fallback
+          // If parsing fails, use fallback
         }
       }
       
@@ -67,25 +67,17 @@ export default function ResetPasswordForm({ onSwitchToLogin }) {
       </div>
 
       <button
+        className="btn btn-warning"
         type="submit"
         disabled={loading}
-        style={{
-          width: '100%',
-          padding: 12,
-          background: loading ? '#9ca3af' : '#f59e0b',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          fontSize: 16
-        }}
+        style={{ width: '100%', padding: 12, fontSize: 16 }}
       >
-        {loading ? t('loading') : 'Odeslat pokyny'} {/* TODO: přidat do translations */}
+        {loading ? t('loading') : t('sendInstructions')}
       </button>
 
       <div style={{ textAlign: 'center', fontSize: 14 }}>
         <button type="button" onClick={onSwitchToLogin} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', textDecoration: 'underline' }}>
-          Zpět na přihlášení {/* TODO: přidat do translations */}
+          {t('backToLogin')}
         </button>
       </div>
     </form>

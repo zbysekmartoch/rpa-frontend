@@ -55,7 +55,7 @@ export default function ConfirmResetPasswordForm({ token, onSuccess, onSwitchToL
       setNewPassword('');
       setConfirmPassword('');
       
-      // Po 2 sekundách přesměruj na login
+      // Redirect to login after 2 seconds
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
@@ -77,7 +77,7 @@ export default function ConfirmResetPasswordForm({ token, onSuccess, onSwitchToL
             errorMessage = errorData.message;
           }
         } catch {
-          // Pokud parsing selže, použijeme fallback
+          // If parsing fails, use fallback
         }
       }
       
@@ -95,16 +95,10 @@ export default function ConfirmResetPasswordForm({ token, onSuccess, onSwitchToL
           {t('missingResetToken')}
         </div>
         <button
+          className="btn btn-primary"
           type="button"
           onClick={onSwitchToLogin}
-          style={{
-            padding: 12,
-            background: '#3b82f6',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-          }}
+          style={{ padding: 12 }}
         >
           {t('backToLogin')}
         </button>
@@ -173,17 +167,10 @@ export default function ConfirmResetPasswordForm({ token, onSuccess, onSwitchToL
       </div>
 
       <button
+        className="btn btn-add"
         type="submit"
         disabled={loading || success}
-        style={{
-          padding: 12,
-          background: loading || success ? '#9ca3af' : '#22c55e',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 6,
-          cursor: loading || success ? 'not-allowed' : 'pointer',
-          fontWeight: 500,
-        }}
+        style={{ padding: 12 }}
       >
         {loading ? t('resetting') : t('resetPasswordButton')}
       </button>

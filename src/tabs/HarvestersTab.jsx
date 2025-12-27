@@ -1,6 +1,11 @@
+/**
+ * Harvesters Tab
+ * Manage and monitor data harvesters with status checking
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
+import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 
 // Status check interval in milliseconds (1 minute)
 const STATUS_CHECK_INTERVAL = 60 * 1000;
@@ -127,8 +132,6 @@ export default function HarvestersTab() {
     }
   ]), []);
   
-  const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);
-  
   const onRowClicked = useCallback((e) => {
     setActiveHarvester(e.data);
   }, []);
@@ -189,34 +192,20 @@ export default function HarvestersTab() {
       {/* Toolbar with limited operations */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 12px' }}>
         <div style={{ fontSize: 18, fontWeight: 600 }}>Data Harvesters</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 , paddingTop: 4 }}>
           
           <button
+            className="btn btn-warning"
             onClick={handleRefreshStatus}
             disabled={!activeHarvester}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #8b5cf6',
-              background: !activeHarvester ? '#e9d5ff' : '#8b5cf6',
-              color: '#fff',
-              borderRadius: 8,
-              cursor: !activeHarvester ? 'not-allowed' : 'pointer'
-            }}
           >
             Refresh Status
           </button>
 
           <button
+            className="btn btn-delete"
             onClick={handleDelete}
             disabled={!activeHarvester}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #dc2626',
-              background: !activeHarvester ? '#fecaca' : '#dc2626',
-              color: '#fff',
-              borderRadius: 8,
-              cursor: !activeHarvester ? 'not-allowed' : 'pointer'
-            }}
           >
             Delete
           </button>
@@ -228,26 +217,24 @@ export default function HarvestersTab() {
       </div>
 
       {/* Two columns: harvesters list | details */}
-      <div style={{ height: 'calc(100% - 40px)', display: 'flex', gap: 12, padding: '0 12px' }}>
+      <div style={{ height: 'calc(100% - 50px)', display: 'flex', gap: 12, padding: '0 12px' }}>
         {/* LEFT - Harvesters list */}
         <section
           style={{
             width: 650, minWidth: 550, height: '100%',
-            border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
+          //  border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
           }}
         >
-          <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+          <div className="ag-theme-quartz" style={getGridContainerStyle()}>
             <AgGridReact
-              theme="legacy"
+              {...commonGridProps}
               ref={leftRef}
               rowData={harvesters}
               columnDefs={cols}
               defaultColDef={defaultColDef}
-              animateRows={false}
-              headerHeight={36}
-              domLayout="normal"
               rowSelection={{ mode: 'singleRow' }}
               onRowClicked={onRowClicked}
+              tooltipShowDelay={300}
             />
           </div>
         </section>
@@ -255,7 +242,7 @@ export default function HarvestersTab() {
         {/* RIGHT - Harvester details with editing */}
         <section
           style={{
-            flex: 1, minWidth: 0, minHeight: 0, height: '100%',
+            flex: 1, minWidth: 0, minHeight: 0, height: 'calc(100% - 34px)' ,
             border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#fff'
           }}
         >

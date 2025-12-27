@@ -5,6 +5,52 @@ All notable changes to the RPA Frontend project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-12-27
+
+### Added
+
+#### Centralized Grid Configuration
+- **gridConfig.js** - Centralized AG Grid configuration for all grids
+  - Unified row height, header height, and styling
+  - Shared CSS theme variables for consistent appearance
+  - Text, number, and date filter configurations
+  - Tooltip support for truncated cell content
+
+#### Client-side Filtering
+- **ProductGrid.jsx** - Enhanced with floating filters
+  - Text filters with contains, starts with, ends with options
+  - Number filters with greater than, less than, equals, in range
+  - Date filters for price date columns
+  - Filter row displayed below header
+
+#### Monaco Editor Enhancements
+- **AnalysisDefinitionTab.jsx** - Script editor improvements
+  - Theme selection (Light, Dark, High Contrast) with persistence
+  - Open in new window functionality with full editing
+  - Drag & drop file upload to folders
+  - File modification timestamps display
+
+#### Tab State Preservation
+- **App.jsx** - Tabs now preserve state when switching
+  - All tabs rendered simultaneously, hidden with CSS
+  - Preserves selections, filters, sort order, scroll position
+
+### Changed
+
+#### Code Quality
+- All comments translated to English
+- Added JSDoc headers to all components
+- Consistent coding patterns across files
+
+#### Authentication
+- Added Authorization header to all fetch calls
+- Consistent JWT token handling via fetchJSON wrapper
+
+### Documentation
+- Updated README.md with current features
+- Updated DEVELOPMENT.md with coding standards
+- All documentation now in English
+
 ## [2.0.0] - 2025-10-05
 
 ### Added

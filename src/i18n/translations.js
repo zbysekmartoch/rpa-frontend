@@ -45,6 +45,11 @@ export const translations = {
     missingResetToken: 'Chybí platný reset token. Zkuste proces obnovení hesla začít znovu.',
     passwordRequired: 'Heslo je povinné',
     passwordTooShort: 'Heslo musí mít minimálně 3 znaky',
+    passwordsDoNotMatch: 'Hesla se neshodují',
+    registrationSuccessful: 'Registrace byla úspěšná! Můžete se přihlásit.',
+    resetPasswordEmailSent: 'Pokyny pro obnovení hesla byly odeslány na váš e-mail.',
+    resetPasswordFailed: 'Odeslání selhalo',
+    loginFailed: 'Přihlášení se nezdařilo',
     
     // Settings
     language: 'Jazyk',
@@ -213,7 +218,6 @@ export const translations = {
     productUrl: 'URL',
     
     // Login form
-    loginFailed: 'Přihlášení selhalo',
     loggingIn: 'Přihlašuji...',
   },
   
@@ -263,6 +267,11 @@ export const translations = {
     missingResetToken: 'Missing valid reset token. Please start the password recovery process again.',
     passwordRequired: 'Password is required',
     passwordTooShort: 'Password must be at least 3 characters',
+    passwordsDoNotMatch: 'Passwords do not match',
+    registrationSuccessful: 'Registration successful! You can now log in.',
+    resetPasswordEmailSent: 'Password reset instructions have been sent to your email.',
+    resetPasswordFailed: 'Sending failed',
+    loginFailed: 'Login failed',
     
     // Settings
     language: 'Language',
@@ -432,7 +441,6 @@ export const translations = {
     productUrl: 'URL',
     
     // Login form
-    loginFailed: 'Login failed',
     loggingIn: 'Logging in...',
   },
   
@@ -482,6 +490,11 @@ export const translations = {
     missingResetToken: 'Chýba platný reset token. Skúste proces obnovenia hesla začať znova.',
     passwordRequired: 'Heslo je povinné',
     passwordTooShort: 'Heslo musí mať minimálne 3 znaky',
+    passwordsDoNotMatch: 'Heslá sa nezhodujú',
+    registrationSuccessful: 'Registrácia bola úspešná! Môžete sa prihlásiť.',
+    resetPasswordEmailSent: 'Pokyny pre obnovenie hesla boli odoslané na váš e-mail.',
+    resetPasswordFailed: 'Odoslanie zlyhalo',
+    loginFailed: 'Prihlásenie zlyhalo',
     
     // Settings
     language: 'Jazyk',
@@ -650,7 +663,6 @@ export const translations = {
     productUrl: 'URL',
     
     // Login form
-    loginFailed: 'Prihlásenie zlyhalo',
     loggingIn: 'Prihlasovanie...',
   },
 };

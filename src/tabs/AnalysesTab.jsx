@@ -1,9 +1,13 @@
+/**
+ * Analysis Tab Container
+ * Main component with sub-tabs for analysis execution and definition
+ */
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import AnalysisExecutionTab from './AnalysisExecutionTab.jsx';
 import AnalysisDefinitionTab from './AnalysisDefinitionTab.jsx';
 
-// Hlavní komponenta s podzáložkami
+// Main component with sub-tabs
 export default function AnalysisTab() {
   const { t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState('execution'); // 'execution' | 'definition'
@@ -13,8 +17,10 @@ export default function AnalysisTab() {
       onClick={() => setActiveSubTab(id)}
       style={{
         padding: '8px 12px',
-        border: '1px solid #e5e7eb',
+        border: '1px solid #012345',
         borderBottom: 'none',
+        //borderBottom: tab === id ? 'none' : '1px solid #012345',
+        marginBottom: activeSubTab === id ? -1 : 0,
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
         borderBottomLeftRadius: 0,
@@ -22,8 +28,9 @@ export default function AnalysisTab() {
         background: activeSubTab === id ? '#fff' : '#f3f4f6',
         fontWeight: activeSubTab === id ? 600 : 400,
         color: '#111827',
-        cursor: 'pointer'
+        zIndex: activeSubTab === id ? 1 : 0
       }}
+
     >
       {children}
     </button>
@@ -31,14 +38,14 @@ export default function AnalysisTab() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Podzáložky */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: -1 }}>
+      {/* Sub-tabs navigation */}
+      <div style={{ display: 'flex', gap: 8 }}>
         <SubTabButton id="execution">{t('analysisExecution')}</SubTabButton>
         <SubTabButton id="definition">{t('analysisDefinition')}</SubTabButton>
       </div>
 
-      {/* Obsah podzáložek */}
-      <div style={{ border: '1px solid #e5e7eb', padding: 10, background: '#fff', height: 'calc(100% - 40px)' }}>
+      {/* Sub-tabs content */}
+      <div style={{ border: '1px solid #012345', padding: 10, background: '#fff', height: 'calc(100% - 60px)' }}>
         {activeSubTab === 'execution' && <AnalysisExecutionTab />}
         {activeSubTab === 'definition' && <AnalysisDefinitionTab />}
       </div>

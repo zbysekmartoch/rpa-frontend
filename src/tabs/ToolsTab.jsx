@@ -1,3 +1,7 @@
+/**
+ * Tools Tab
+ * Utility tools for data harvesting operations including manual import
+ */
 import React, { useState } from 'react';
 
 export default function ToolsTab() {
@@ -28,8 +32,13 @@ export default function ToolsTab() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
+      // Use standard fetch with manually added Authorization header
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/api/v1/harvest/manual-import', {
         method: 'POST',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: formData,
       });
 
@@ -161,19 +170,10 @@ export default function ToolsTab() {
           )}
           
           <button
+            className="btn btn-add"
             onClick={handleImport}
             disabled={!selectedFile || uploading}
-            style={{
-              padding: '10px 16px',
-              background: (!selectedFile || uploading) ? '#9ca3af' : '#22c55e',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              cursor: (!selectedFile || uploading) ? 'not-allowed' : 'pointer',
-              fontWeight: 500,
-              fontSize: 14,
-              marginTop: 'auto'
-            }}
+            style={{ marginTop: 'auto' }}
           >
             {uploading ? 'Importing...' : 'Import Data'}
           </button>

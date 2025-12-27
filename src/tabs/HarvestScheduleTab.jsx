@@ -1,6 +1,11 @@
+/**
+ * Harvest Schedule Tab
+ * Manage cron-based scheduling for automated data harvesting
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
+import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 
 // Function to interpret cron expression into human-readable text
 function interpretCronExpression(cron) {
@@ -211,7 +216,6 @@ export default function HarvestScheduleTab() {
     },
   ]), []);
   
-  const defaultColDef = useMemo(() => ({ sortable: true, resizable: true }), []);
   const onRowClicked = useCallback((e) => {
     setActiveSchedule(e.data);
     setEditData({
@@ -329,45 +333,38 @@ export default function HarvestScheduleTab() {
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 12px' }}>
         <div style={{ fontSize: 18, fontWeight: 600 }}>Harvest Schedules</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8,paddingTop: 4 }}>
           {adding ? (
             <>
               <button
+                className="btn btn-cancel"
                 onClick={() => {
                   setAdding(false);
                   setEditData({ harvester_id: '', datasource_id: '', cron_expression: '' });
                 }}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#6b7280', color: '#fff', border: 'none' }}
               >
                 Cancel
               </button>
               <button
+                className="btn btn-add"
                 onClick={handleAdd}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
               >
                 Save
               </button>
             </>
           ) : (
             <button
+              className="btn btn-add"
               onClick={() => setAdding(true)}
-              style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
             >
               + Add Schedule
             </button>
           )}
           
           <button
+            className="btn btn-delete"
             onClick={handleDelete}
             disabled={!activeSchedule}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #dc2626',
-              background: !activeSchedule ? '#fecaca' : '#dc2626',
-              color: '#fff',
-              borderRadius: 8,
-              cursor: !activeSchedule ? 'not-allowed' : 'pointer'
-            }}
           >
             Delete
           </button>
@@ -436,26 +433,24 @@ export default function HarvestScheduleTab() {
       )}
 
       {/* Two columns: schedules list | details */}
-      <div style={{ height: 'calc(100% - 40px)', display: 'flex', gap: 12, padding: '0 12px' }}>
+      <div style={{ height: 'calc(100% - 50px)', display: 'flex', gap: 12, padding: '0 12px' }}>
         {/* LEFT - Schedules list */}
         <section
           style={{
             width: 700, minWidth: 600, height: '100%',
-            border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
+      //      border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
           }}
         >
-          <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+          <div className="ag-theme-quartz" style={getGridContainerStyle()}>
             <AgGridReact
-              theme="legacy"
+              {...commonGridProps}
               ref={leftRef}
               rowData={schedules}
               columnDefs={cols}
               defaultColDef={defaultColDef}
-              animateRows={false}
-              headerHeight={36}
-              domLayout="normal"
               rowSelection={{ mode: 'singleRow' }}
               onRowClicked={onRowClicked}
+              tooltipShowDelay={300}
             />
           </div>
         </section>
@@ -463,7 +458,7 @@ export default function HarvestScheduleTab() {
         {/* RIGHT - Schedule details */}
         <section
           style={{
-            flex: 1, minWidth: 0, minHeight: 0, height: '100%',
+            flex: 1, minWidth: 0, minHeight: 0, height: 'calc(100% - 34px)',
             border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, background: '#fff'
           }}
         >
@@ -474,14 +469,8 @@ export default function HarvestScheduleTab() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ margin: 0 }}>Schedule Details</h3>
                 <button
+                  className={editing ? "btn btn-warning" : "btn btn-edit"}
                   onClick={() => setEditing(!editing)}
-                  style={{
-                    padding: '6px 12px',
-                    background: editing ? '#f59e0b' : '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 4
-                  }}
                 >
                   {editing ? 'View' : 'Edit'}
                 </button>
@@ -539,15 +528,9 @@ export default function HarvestScheduleTab() {
                     />
                   </div>
                   <button
+                    className="btn btn-add"
                     onClick={handleUpdate}
-                    style={{
-                      alignSelf: 'flex-start',
-                      padding: '8px 16px',
-                      background: '#22c55e',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 4
-                    }}
+                    style={{ alignSelf: 'flex-start' }}
                   >
                     Save Changes
                   </button>
@@ -645,17 +628,9 @@ export default function HarvestScheduleTab() {
                       return (
                         <div style={{ marginTop: 8 }}>
                           <button
+                            className="btn btn-edit"
                             onClick={() => setShowingImportForm(true)}
                             disabled={!isOnline}
-                            style={{
-                              padding: '8px 16px',
-                              background: isOnline ? '#3b82f6' : '#9ca3af',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 6,
-                              cursor: isOnline ? 'pointer' : 'not-allowed',
-                              fontWeight: 500,
-                            }}
                           >
                             Import Data from Harvester
                           </button>
@@ -784,38 +759,21 @@ export default function HarvestScheduleTab() {
 
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 <button
+                  className="btn btn-add"
                   onClick={handleImport}
                   disabled={importing}
-                  style={{
-                    flex: 1,
-                    padding: '10px 20px',
-                    background: importing ? '#9ca3af' : '#22c55e',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: importing ? 'not-allowed' : 'pointer',
-                    fontWeight: 500,
-                    fontSize: 14
-                  }}
+                  style={{ flex: 1 }}
                 >
                   {importing ? 'Importing...' : 'Start Import'}
                 </button>
                 <button
+                  className="btn btn-cancel"
                   onClick={() => {
                     setShowingImportForm(false);
                     setImportData({ from: '', to: '', screenshots: false, images: false });
                   }}
                   disabled={importing}
-                  style={{
-                    flex: 1,
-                    padding: '10px 20px',
-                    background: '#fff',
-                    color: '#374151',
-                    border: '1px solid #d1d5db',
-                    borderRadius: 6,
-                    cursor: importing ? 'not-allowed' : 'pointer',
-                    fontSize: 14
-                  }}
+                  style={{ flex: 1 }}
                 >
                   Cancel
                 </button>

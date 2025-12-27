@@ -1,13 +1,19 @@
-// src/tabs/BasketsTab.jsx
+/**
+ * Baskets Tab Component
+ * Manages shopping baskets (collections of products) with CRUD operations.
+ * Features dual-grid layout: left grid shows baskets, right grid shows products in selected basket.
+ * Supports private and shared baskets with ownership management.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 
 const asItems = (d) => (Array.isArray(d) ? d : (d?.items ?? []));
 
-// Custom cell renderer pro URL
+// Custom cell renderer for URL
 const UrlCellRenderer = (props) => {
   if (!props.value) return <span>-</span>;
   return (
@@ -47,7 +53,7 @@ export default function BasketsTab() {
   const leftRef = useRef(null);
   const rightRef = useRef(null);
 
-  // --- načtení košíků
+  // --- Load baskets
   const reloadBaskets = useCallback(async () => {
     try {
       const d = await fetchJSON('/api/v1/baskets');
@@ -62,7 +68,7 @@ export default function BasketsTab() {
 
   useEffect(() => { reloadBaskets(); }, [reloadBaskets]);
 
-  // --- načtení produktů košíku
+  // --- Load basket products
   const reloadProducts = useCallback(async (basketId) => {
     if (!basketId) { setProducts([]); return; }
     try {
@@ -78,7 +84,7 @@ export default function BasketsTab() {
 
   useEffect(() => { reloadProducts(activeBasket?.id); }, [activeBasket?.id, reloadProducts]);
 
-  // --- levý grid: košíky
+  // --- Left grid: baskets
   const basketCols = useMemo(() => ([
     { headerName: t('id'), field: 'id', width: 90 },
     { headerName: t('name'), field: 'name', flex: 1, minWidth: 180 },
@@ -95,10 +101,9 @@ export default function BasketsTab() {
       }
     },
   ]), [t]);
-  const basketDefault = useMemo(() => ({ sortable: true, resizable: true }), []);
   const onBasketRowClicked = useCallback((e) => setActiveBasket(e.data), []);
 
-  // --- pravý grid: produkty v košíku
+  // --- Right grid: products in basket
   const prodCols = useMemo(() => ([
     { headerName: t('id'), field: 'id', width: 90 },
     { headerName: t('name'), field: 'name', flex: 2, minWidth: 240 },
@@ -139,31 +144,35 @@ export default function BasketsTab() {
       cellRenderer: UrlCellRenderer
     },
   ]), [t]);
-  const prodDefault = useMemo(() => ({ sortable: true, resizable: true }), []);
 
-  // vybrané ID z pravého gridu (pro povolení tlačítka)
+  // Selected IDs from right grid (for enabling delete button)
   const [selectedIds, setSelectedIds] = useState([]);
   const onRightSelectionChanged = useCallback((e) => {
     setSelectedIds(e.api.getSelectedRows().map(r => r.id));
   }, []);
 
-  // --- mazání vybraných
+  // --- Delete selected products from basket
   const handleRemoveSelected = useCallback(async () => {
     const bid = activeBasket?.id;
     if (!bid) { alert(t('selectBasketFirst')); return; }
     if (selectedIds.length === 0) { alert(t('noProductsSelectedRight')); return; }
 
-    // potvrzení (volitelné)
+    // Confirmation (optional)
     if (!confirm(t('confirmRemoveProducts', { count: selectedIds.length, basketName: activeBasket.name }))) return;
 
     try {
       await Promise.all(
         selectedIds.map(pid =>
-          fetch(`/api/v1/baskets/${bid}/products/${pid}`, { method: 'DELETE' })
+          fetch(`/api/v1/baskets/${bid}/products/${pid}`, { 
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+          })
             .then(r => { if (!r.ok) throw new Error(`${r.status}`); })
         )
       );
-      // refresh pravého gridu + vlevo aktualizuj počty
+      // Refresh right grid + update counts in left grid
       await reloadProducts(bid);
       await reloadBaskets();
       setSelectedIds([]);
@@ -173,16 +182,16 @@ export default function BasketsTab() {
     }
   }, [activeBasket, selectedIds, reloadProducts, reloadBaskets, t]);
 
-  // --- přidání košíku
+  // --- Add basket
   const handleAddBasket = useCallback(async () => {
     if (!newName.trim()) return;
     try {
       const payload = { name: newName.trim() };
-      // Pokud je košík sdílený, nastavíme usr_id na 0
+      // If basket is shared, set usr_id to 0
       if (newIsShared) {
         payload.usr_id = 0;
       }
-      // Jinak backend automaticky nastaví usr_id na aktuálního uživatele
+      // Otherwise backend automatically sets usr_id to current user
       
       await fetchJSON('/api/v1/baskets', {
         method: 'POST',
@@ -198,7 +207,7 @@ export default function BasketsTab() {
     }
   }, [newName, newIsShared, reloadBaskets, t]);
 
-  // --- mazání košíku
+  // --- Delete basket
   const handleDeleteBasket = useCallback(async () => {
     if (!activeBasket) return;
     if (!confirm(t('confirmDeleteBasket', { basketName: activeBasket.name }))) return;
@@ -229,7 +238,7 @@ export default function BasketsTab() {
     }
   }, [activeBasket, renameValue, reloadBaskets, t]);
 
-  // --- změna vlastnictví košíku
+  // --- Change basket ownership
   const handleUpdateOwnership = useCallback(async () => {
     if (!activeBasket) return;
     try {
@@ -242,13 +251,13 @@ export default function BasketsTab() {
       });
       setEditingOwnership(false);
       await reloadBaskets();
-      // refresh activeBasket to reflect new ownership
+      // Refresh activeBasket to reflect new ownership
       try {
         const all = await fetchJSON('/api/v1/baskets');
         const found = (Array.isArray(all) ? all : (all?.items ?? [])).find(b => b.id === activeBasket.id);
         if (found) setActiveBasket(found);
       } catch {
-        // ignore
+        // Ignore
       }
       setStatus(t('ownershipUpdated'));
     } catch (error) {
@@ -266,7 +275,7 @@ export default function BasketsTab() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 18, fontWeight: 600 }}>{t('baskets')}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Přidat košík */}
+          {/* Add basket */}
           {adding ? (
             <>
               <input
@@ -291,47 +300,40 @@ export default function BasketsTab() {
                 <span>{t('sharedBasket')}</span>
               </label>
               <button
+                className="btn btn-add"
                 onClick={handleAddBasket}
                 disabled={!newName.trim()}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
               >
                 {t('add')}
               </button>
               <button
+                className="btn btn-cancel"
                 onClick={() => { setAdding(false); setNewName(''); setNewIsShared(false); }}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#f3f4f6', color: '#374151', border: 'none' }}
               >
                 {t('cancel')}
               </button>
             </>
           ) : (
             <button
+              className="btn btn-add"
               onClick={() => setAdding(true)}
-              style={{ padding: '6px 12px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none' }}
               title={t('addBasketTooltip')}
             >
               + {t('addBasket')}
             </button>
           )}
           
-          {/* Smazat košík */}
+          {/* Delete basket */}
           <button
+            className="btn btn-delete"
             onClick={handleDeleteBasket}
             disabled={!activeBasket}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #dc2626',
-              background: !activeBasket ? '#fecaca' : '#dc2626',
-              color: '#fff',
-              borderRadius: 8,
-              cursor: !activeBasket ? 'not-allowed' : 'pointer'
-            }}
             title={t('deleteBasketTooltip')}
           >
             {t('deleteBasket')}
           </button>
 
-          {/* Přejmenovat košík */}
+          {/* Rename basket */}
           {renaming ? (
             <>
               <input
@@ -347,31 +349,24 @@ export default function BasketsTab() {
                 style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
               />
               <button
+                className="btn btn-edit"
                 onClick={handleRenameBasket}
                 disabled={!renameValue.trim()}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#3b82f6', color: '#fff', border: 'none' }}
               >
                 {t('save')}
               </button>
               <button
+                className="btn btn-cancel"
                 onClick={() => { setRenaming(false); setRenameValue(''); }}
-                style={{ padding: '6px 12px', borderRadius: 8, background: '#f3f4f6', color: '#374151', border: 'none' }}
               >
                 {t('cancel')}
               </button>
             </>
           ) : (
             <button
+              className="btn btn-edit"
               onClick={() => { setRenaming(true); setRenameValue(activeBasket?.name || ''); }}
               disabled={!activeBasket}
-              style={{
-                padding: '6px 12px',
-                border: '1px solid #3b82f6',
-                background: !activeBasket ? '#dbeafe' : '#3b82f6',
-                color: '#fff',
-                borderRadius: 8,
-                cursor: !activeBasket ? 'not-allowed' : 'pointer'
-              }}
               title={t('renameBasketTooltip')}
             >
               {t('renameBasket')}
@@ -385,18 +380,11 @@ export default function BasketsTab() {
             )}
           </div>
           
-          {/* Odebrat vybrané produkty */}
+          {/* Remove selected products */}
           <button
+            className="btn btn-delete"
             onClick={handleRemoveSelected}
             disabled={!activeBasket || selectedIds.length === 0}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #dc2626',
-              background: (!activeBasket || selectedIds.length === 0) ? '#fecaca' : '#dc2626',
-              color: '#fff',
-              borderRadius: 8,
-              cursor: (!activeBasket || selectedIds.length === 0) ? 'not-allowed' : 'pointer'
-            }}
             title={t('removeSelectedTooltip')}
           >
             {t('removeSelected')}
@@ -405,7 +393,7 @@ export default function BasketsTab() {
       </div>
 
       {/* Two columns: baskets | products */}
-      <div style={{ height: 'calc(100% - 40px)', display: 'flex', gap: 12 }}>
+      <div style={{ height: 'calc(100% - 60px)', display: 'flex', gap: 12 }}>
         {/* LEFT */}
         <section
           style={{
@@ -413,18 +401,16 @@ export default function BasketsTab() {
             border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
           }}
         >
-          <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+          <div className="ag-theme-quartz" style={getGridContainerStyle()}>
             <AgGridReact
-              theme="legacy"
+              {...commonGridProps}
               ref={leftRef}
               rowData={baskets}
               columnDefs={basketCols}
-              defaultColDef={basketDefault}
-              animateRows={false}
-              headerHeight={36}
-              domLayout="normal"
+              defaultColDef={defaultColDef}
               rowSelection={{ mode: 'singleRow', checkboxes: false }}
               onRowClicked={onBasketRowClicked}
+              tooltipShowDelay={300}
             />
           </div>
         </section>
@@ -436,12 +422,6 @@ export default function BasketsTab() {
             border: '1px solid #e5e7eb', borderRadius: 12, padding: 10, overflow: 'hidden', background: '#fff'
           }}
         >
-          <div style={{ marginBottom: 6, fontSize: 13, color: '#6b7280' }}>
-            {activeBasket ? 
-              t('productsInBasket', { basketName: activeBasket.name, count: products.length }) : 
-              t('selectBasket')
-            }
-          </div>
 
           {/* Ownership / sharing controls */}
           {activeBasket && (
@@ -466,39 +446,37 @@ export default function BasketsTab() {
                       <span style={{ fontSize: 13 }}>{t('shared')}</span>
                     </label>
                     <button
+                      className="btn btn-add"
                       onClick={handleUpdateOwnership}
-                      style={{ padding: '6px 10px', background: '#22c55e', color: '#fff', border: 'none', borderRadius: 6 }}
                     >{t('save')}</button>
                     <button
+                      className="btn btn-cancel"
                       onClick={() => { setEditingOwnership(false); setEditIsShared(false); }}
-                      style={{ padding: '6px 10px', background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 6 }}
                     >{t('cancel')}</button>
                   </div>
                 ) : (
                   <button
+                    className="btn btn-cancel"
                     onClick={() => { setEditingOwnership(true); setEditIsShared(activeBasket.isShared || activeBasket.usr_id === 0); }}
-                    style={{ padding: '6px 10px', background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6 }}
                   >{t('editOwnership')}</button>
                 )
               )}
             </div>
           )}
-          <div className="ag-theme-quartz" style={{ height: 'calc(100% - 24px)', width: '100%' }}>
+          <div className="ag-theme-quartz" style={getGridContainerStyle({ height: 'calc(100% - 24px)' })}>
             <AgGridReact
-              theme="legacy"
+              {...commonGridProps}
               ref={rightRef}
               rowData={products}
               columnDefs={prodCols}
-              defaultColDef={prodDefault}
-              animateRows={false}
-              headerHeight={36}
-              domLayout="normal"
+              defaultColDef={defaultColDef}
               rowSelection={{ mode: 'multiRow', headerCheckbox: true, checkboxes: true }}
               selectionColumnDef={{ width: 42, suppressMenu: true, resizable: false }}
               suppressRowClickSelection={true}
               rowMultiSelectWithClick={false}
               multiSortKey="shift"
               onSelectionChanged={onRightSelectionChanged}
+              tooltipShowDelay={300}
             />
           </div>
         </section>

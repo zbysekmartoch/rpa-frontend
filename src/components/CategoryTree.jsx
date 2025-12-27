@@ -1,4 +1,9 @@
-// src/components/CategoryTree.jsx
+/**
+ * Category Tree Component
+ * Displays a hierarchical tree of product categories with checkboxes.
+ * Supports multi-selection for filtering products and single-selection for activation.
+ * Categories are fetched from the API and rendered recursively.
+ */
 import React, { useEffect, useState } from 'react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 
@@ -51,7 +56,7 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
         <button
           onClick={() => hasChildren && setOpen(o => !o)}
           disabled={!hasChildren}
-          title={hasChildren ? (open ? 'Sbalit' : 'Rozbalit') : 'Bez podkategorií'}
+          title={hasChildren ? (open ? 'Collapse' : 'Expand') : 'No subcategories'}
           style={{ width: 20, height: 20, border: 'none', background: 'transparent' }}
         >
           {hasChildren ? (open ? '▾' : '▸') : '•'}
@@ -62,7 +67,7 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
           style={{ width: 16, height: 16 }}
           checked={checked}
           onChange={() => onTogglePath(node.path)}
-          title="Označit kategorii (podstrom bude zahrnut v dotazu)"
+          title="Select category (subtree will be included in query)"
         />
 
         <button

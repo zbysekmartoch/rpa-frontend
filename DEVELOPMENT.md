@@ -3,7 +3,7 @@
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 
@@ -11,65 +11,56 @@
 
 1. **Clone Repository**
    ```bash
-   git clone https://github.com/zbysekmartoch/rpa-frontend.git
+   git clone <repository-url>
    cd rpa-frontend
    ```
 
 2. **Install Dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
-3. **Environment Configuration**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env`:
-   ```
-   VITE_API_BASE_URL=http://localhost:8000
-   VITE_APP_TITLE=RPA Frontend
-   ```
-
-4. **Development Server**
+3. **Start Development Server**
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
+   Access at http://localhost:5173
 
 ## Project Architecture
 
 ### Component Structure
 ```
 src/components/
-├── AuthPage.jsx          # Authentication container
-├── CategoryTree.jsx      # Hierarchical category browser
-├── LanguageSelector.jsx  # Language switching UI
-├── ProductGrid.jsx       # Enhanced product grid with AG-Grid
-├── TopBar.jsx           # Main navigation bar
-└── WorkflowSelector.jsx  # Dynamic workflow selection
+├── AuthPage.jsx          # Authentication container with login/register forms
+├── CategoryTree.jsx      # Hierarchical category browser with checkboxes
+├── LanguageSelector.jsx  # Language switching dropdown
+├── ProductGrid.jsx       # AG Grid-based product table with filters
+├── TopBar.jsx           # Main navigation bar (unused)
+└── WorkflowSelector.jsx  # Dynamic workflow selection for analyses
 ```
 
 ### Tab-based Architecture
 Each main feature is implemented as a tab component:
 ```
 src/tabs/
-├── ProductsTab.jsx       # Product catalog management
-├── BasketsTab.jsx        # Shopping basket operations
-├── AnalysesTab.jsx       # Analysis configuration
-├── HarvestTab.jsx        # Data harvesting main container
-├── HarvestersTab.jsx     # Harvester management
-├── DataSourcesTab.jsx    # Data source configuration
-└── HarvestScheduleTab.jsx # Automated scheduling
+├── ProductsTab.jsx           # Product catalog with category tree
+├── BasketsTab.jsx            # Shopping basket CRUD operations
+├── AnalysesTab.jsx           # Analysis container with sub-tabs
+├── AnalysisDefinitionTab.jsx # Monaco editor for scripts
+├── AnalysisExecutionTab.jsx  # Analysis configuration and execution
+├── ResultsTab.jsx            # Analysis results viewer
+├── HarvestTab.jsx            # Data harvesting container
+├── HarvestersTab.jsx         # Harvester management with status
+├── DataSourcesTab.jsx        # Data source URL configuration
+├── HarvestScheduleTab.jsx    # Cron-based scheduling
+└── SettingsTab.jsx           # User preferences
 ```
 
 ### State Management
-- **AuthContext**: User authentication state
-- **LanguageContext**: Language preferences
-- **Local State**: Component-specific state with useState/useReducer
+- **AuthContext** - User authentication, JWT token handling
+- **LanguageContext** - Internationalization (cs/sk/en)
+- **SettingsContext** - User preferences (advanced UI toggle)
+- **Local State** - Component-specific state with useState
 
 ## Coding Standards
 
@@ -83,6 +74,7 @@ export default function MyComponent() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Memoized callback to prevent unnecessary re-renders
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -99,379 +91,189 @@ export default function MyComponent() {
     loadData();
   }, [loadData]);
 
-  const processedData = useMemo(() => {
-    return data.filter(item => item.active);
-  }, [data]);
-
-  return (
-    <div>
-      {loading ? 'Loading...' : `${processedData.length} items`}
-    </div>
-  );
+  return (/* JSX */);
 }
 ```
 
-**AG-Grid Integration**
-```javascript
-import { AgGridReact } from 'ag-grid-react';
+### API Communication
 
-const cols = useMemo(() => ([
-  { headerName: 'ID', field: 'id', width: 90 },
-  { headerName: 'Name', field: 'name', flex: 1 },
+Always use `fetchJSON()` wrapper from `lib/fetchJSON.js`:
+```javascript
+import { fetchJSON } from '../lib/fetchJSON.js';
+
+// GET request (auth token automatically added)
+const data = await fetchJSON('/api/v1/endpoint');
+
+// POST request
+const result = await fetchJSON('/api/v1/endpoint', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ key: 'value' }),
+});
+```
+
+For direct fetch calls (file uploads, etc.), always include Authorization header:
+```javascript
+await fetch('/api/v1/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+  },
+  body: formData
+});
+```
+
+### AG Grid Configuration
+
+Use centralized configuration from `lib/gridConfig.js`:
+```javascript
+import { 
+  defaultColDef, 
+  commonGridProps, 
+  getGridContainerStyle 
+} from '../lib/gridConfig.js';
+
+// In component:
+<div className="ag-theme-quartz" style={getGridContainerStyle()}>
+  <AgGridReact
+    {...commonGridProps}
+    rowData={data}
+    columnDefs={columns}
+    defaultColDef={defaultColDef}
+    tooltipShowDelay={300}
+  />
+</div>
+```
+
+For grids with client-side filtering (ProductGrid):
+```javascript
+import { 
+  defaultColDefWithFilter,
+  textFilterParams,
+  numberFilterParams 
+} from '../lib/gridConfig.js';
+
+const columnDefs = [
   { 
-    headerName: 'Status', 
-    field: 'status',
-    cellStyle: (params) => ({
-      backgroundColor: params.value === 'active' ? '#dcfce7' : '#fee2e2'
-    })
-  }
-]), []);
-
-<AgGridReact
-  theme="legacy"
-  rowData={data}
-  columnDefs={cols}
-  defaultColDef={{ sortable: true, resizable: true }}
-  onRowClicked={onRowClicked}
-/>
-```
-
-### Error Handling
-
-**API Calls**
-```javascript
-const handleApiCall = async () => {
-  try {
-    setLoading(true);
-    const result = await fetchJSON('/api/v1/endpoint');
-    setData(result);
-    setError(null);
-  } catch (error) {
-    setError('Failed to load data');
-    console.error('API Error:', error);
-  } finally {
-    setLoading(false);
-  }
-};
-```
-
-**Form Validation**
-```javascript
-const validateForm = (data) => {
-  const errors = {};
-  
-  if (!data.name?.trim()) {
-    errors.name = 'Name is required';
-  }
-  
-  if (!data.email?.includes('@')) {
-    errors.email = 'Valid email is required';
-  }
-  
-  return errors;
-};
-```
-
-### Styling Guidelines
-
-**Inline Styles for Layout**
-```javascript
-<div style={{
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-  padding: 16,
-  border: '1px solid #e5e7eb',
-  borderRadius: 8,
-  background: '#fff'
-}}>
-```
-
-**Color Palette**
-```javascript
-const colors = {
-  primary: '#3b82f6',
-  success: '#22c55e',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  gray: '#6b7280',
-  lightGray: '#f3f4f6',
-  border: '#e5e7eb'
-};
-```
-
-## Feature Implementation
-
-### Adding New Tab
-
-1. **Create Tab Component**
-   ```javascript
-   // src/tabs/NewFeatureTab.jsx
-   import React, { useState, useEffect } from 'react';
-   import { fetchJSON } from '../lib/fetchJSON.js';
-
-   export default function NewFeatureTab() {
-     const [data, setData] = useState([]);
-     
-     useEffect(() => {
-       loadData();
-     }, []);
-
-     const loadData = async () => {
-       try {
-         const result = await fetchJSON('/api/v1/new-feature');
-         setData(result.items);
-       } catch (error) {
-         console.error('Failed to load data:', error);
-       }
-     };
-
-     return (
-       <div style={{ height: '100%', padding: 16 }}>
-         <h2>New Feature</h2>
-         {/* Feature implementation */}
-       </div>
-     );
-   }
-   ```
-
-2. **Add to Main Navigation**
-   ```javascript
-   // src/App.jsx
-   import NewFeatureTab from './tabs/NewFeatureTab.jsx';
-
-   // Add to tabs array
-   const tabs = [
-     // ... existing tabs
-     { id: 'newfeature', component: NewFeatureTab }
-   ];
-   ```
-
-3. **Add Translations**
-   ```javascript
-   // src/i18n/translations.js
-   export const translations = {
-     cs: {
-       // ... existing translations
-       newfeature: 'Nová Funkce'
-     },
-     en: {
-       // ... existing translations
-       newfeature: 'New Feature'
-     }
-   };
-   ```
-
-### Implementing Real-time Features
-
-**Status Monitoring Pattern**
-```javascript
-const [status, setStatus] = useState({});
-const intervalRef = useRef(null);
-
-const checkStatus = useCallback(async () => {
-  try {
-    const result = await fetchJSON('/api/v1/status');
-    setStatus(result);
-  } catch (error) {
-    console.error('Status check failed:', error);
-  }
-}, []);
-
-useEffect(() => {
-  // Initial check
-  checkStatus();
-  
-  // Set up interval
-  intervalRef.current = setInterval(checkStatus, 60000); // 1 minute
-  
-  // Cleanup
-  return () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-  };
-}, [checkStatus]);
-```
-
-### Working with AG-Grid
-
-**Custom Cell Renderers**
-```javascript
-const cellRenderer = (params) => {
-  if (params.value?.startsWith('#')) {
-    return (
-      <span style={{ color: '#6b7280', fontStyle: 'italic' }}>
-        {params.value}
-      </span>
-    );
-  }
-  
-  return (
-    <a href={params.value} target="_blank" rel="noopener noreferrer">
-      {params.value}
-    </a>
-  );
-};
-
-const columns = [
-  {
-    headerName: 'URL',
-    field: 'url',
-    cellRenderer
+    headerName: 'Name', 
+    field: 'name',
+    filter: 'agTextColumnFilter',
+    filterParams: textFilterParams
+  },
+  { 
+    headerName: 'Count', 
+    field: 'count',
+    filter: 'agNumberColumnFilter',
+    filterParams: numberFilterParams
   }
 ];
 ```
 
-**Dynamic Row Styling**
-```javascript
-const getRowStyle = useCallback((params) => {
-  if (params.data.isOnline) {
-    return { backgroundColor: '#dcfce7' };
-  }
-  return null;
-}, []);
+### Translations
 
-<AgGridReact
-  getRowStyle={getRowStyle}
-  // ... other props
-/>
+Add all user-facing strings to `i18n/translations.js`:
+```javascript
+export const translations = {
+  cs: {
+    myNewKey: 'Český text',
+  },
+  sk: {
+    myNewKey: 'Slovenský text',
+  },
+  en: {
+    myNewKey: 'English text',
+  }
+};
 ```
+
+Use in components:
+```javascript
+const { t } = useLanguage();
+return <span>{t('myNewKey')}</span>;
+```
+
+### Comments
+
+All code comments should be in English:
+```javascript
+// Load products when category changes
+useEffect(() => {
+  loadProducts(categoryId);
+}, [categoryId, loadProducts]);
+
+/**
+ * Calculate price statistics for selected products
+ * @param {number[]} productIds - Array of product IDs
+ * @returns {Promise<object>} - Statistics object
+ */
+const calculateStats = async (productIds) => {
+  // Implementation
+};
+```
+
+## Adding New Features
+
+### Adding a New Tab
+
+1. Create component in `src/tabs/NewTab.jsx`:
+   ```javascript
+   /**
+    * New Feature Tab
+    * Brief description of functionality
+    */
+   export default function NewTab() {
+     const { t } = useLanguage();
+     return <div>{t('newTabContent')}</div>;
+   }
+   ```
+
+2. Add to `App.jsx`:
+   ```javascript
+   import NewTab from './tabs/NewTab.jsx';
+   
+   // In AppContent, add TabButton and content div
+   ```
+
+3. Add translations to `i18n/translations.js`
+
+### Adding AG Grid Column Filters
+
+For ProductGrid-style filtering:
+1. Import filter params from `gridConfig.js`
+2. Add filter configuration to column definition
+3. Enable `floatingFilter={true}` on grid
+
+### Adding Monaco Editor Features
+
+The script editor in AnalysisDefinitionTab uses:
+- `@monaco-editor/react` package
+- Language detection from file extension
+- Theme stored in localStorage
+- Open in new window with CDN-loaded Monaco
 
 ## Testing
 
-### Component Testing
-```javascript
-import { render, screen, fireEvent } from '@testing-library/react';
-import MyComponent from './MyComponent';
+### Manual Testing Checklist
+- [ ] Login/logout works correctly
+- [ ] Tab switching preserves state
+- [ ] Grid filtering and sorting works
+- [ ] API errors show user-friendly messages
+- [ ] All three languages display correctly
 
-test('renders component correctly', () => {
-  render(<MyComponent />);
-  expect(screen.getByText('Expected Text')).toBeInTheDocument();
-});
+## Build & Deployment
 
-test('handles click events', () => {
-  const handleClick = jest.fn();
-  render(<MyComponent onClick={handleClick} />);
-  
-  fireEvent.click(screen.getByRole('button'));
-  expect(handleClick).toHaveBeenCalled();
-});
-```
-
-### API Testing
-```javascript
-import { fetchJSON } from '../lib/fetchJSON.js';
-
-// Mock fetch for testing
-global.fetch = jest.fn();
-
-test('fetchJSON handles success', async () => {
-  fetch.mockResolvedValueOnce({
-    ok: true,
-    json: async () => ({ success: true, data: 'test' })
-  });
-
-  const result = await fetchJSON('/api/test');
-  expect(result.data).toBe('test');
-});
-```
-
-## Performance Optimization
-
-### Memoization
-```javascript
-// Expensive calculations
-const expensiveValue = useMemo(() => {
-  return data.filter(item => item.complex_calculation);
-}, [data]);
-
-// Event handlers
-const handleClick = useCallback((id) => {
-  onItemClick(id);
-}, [onItemClick]);
-
-// Component memoization
-const MemoizedComponent = React.memo(MyComponent);
-```
-
-### AG-Grid Performance
-```javascript
-// Use immutable data updates
-const updateData = useCallback((newItem) => {
-  setData(prevData => [...prevData, newItem]);
-}, []);
-
-// Disable animations for large datasets
-<AgGridReact
-  animateRows={false}
-  suppressColumnVirtualisation={true}
-  // ... other props
-/>
-```
-
-## Deployment
-
-### Build Process
 ```bash
+# Development
+npm run dev
+
 # Production build
 npm run build
 
-# Preview production build
+# Preview production
 npm run preview
 
-# Analyze bundle size
-npm run build -- --analyze
+# Lint code
+npm run lint
 ```
 
-### Environment Variables
-```bash
-# .env.production
-VITE_API_BASE_URL=https://api.production.com
-VITE_APP_TITLE=RPA Production
-```
-
-### Docker Deployment
-```dockerfile
-FROM node:18-alpine as build
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**CORS Errors**
-- Check API base URL configuration
-- Verify backend CORS settings
-- Use proxy in development if needed
-
-**AG-Grid Display Issues**
-- Ensure AG-Grid CSS is imported
-- Check theme consistency
-- Verify column definitions
-
-**State Management Problems**
-- Use useCallback for stable references
-- Implement proper dependency arrays
-- Avoid direct state mutations
-
-**Performance Issues**
-- Profile component renders
-- Optimize re-renders with memoization
-- Check for memory leaks in intervals
-
-### Debug Tools
-- React Developer Tools
-- AG-Grid Debug Mode
-- Network tab for API calls
-- Console logs for state changes
+See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment instructions.

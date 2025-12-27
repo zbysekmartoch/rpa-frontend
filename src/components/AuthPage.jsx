@@ -8,7 +8,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset' | 'confirm-reset'
   const [resetToken, setResetToken] = useState(null);
 
-  // Kontrola URL parametrů pro reset token
+  // Check URL parameters for reset token
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
@@ -16,7 +16,7 @@ export default function AuthPage() {
     if (token) {
       setResetToken(token);
       setMode('confirm-reset');
-      // Vyčistit URL od tokenu (volitelné, pro bezpečnost)
+      // Clear token from URL (optional, for security)
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
