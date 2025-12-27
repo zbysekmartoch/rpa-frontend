@@ -677,9 +677,9 @@ export default function AnalysisDefinitionTab() {
                       alignItems: 'center',
                       gap: 4
                     }}
-                    title={t('openInNewWindow') || 'Otevřít v novém okně'}
+                    title={'Open in new window'}
                   >
-                    ↗ {t('newWindow') || 'Nové okno'}
+                    ↗ {'New window'}
                   </button>
                 </div>
                 

@@ -50,12 +50,22 @@ export default function HarvestTab() {
         border: '1px solid #012345',
         borderRadius: '0 8px 8px 8px',
         background: '#fff',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}>
-        {activeSubTab === 'harvesters' && <HarvestersTab />}
-        {activeSubTab === 'datasources' && <DataSourcesTab />}
-        {activeSubTab === 'schedule' && <HarvestScheduleTab />}
-        {activeSubTab === 'tools' && <ToolsTab />}
+        {/* All tabs rendered but hidden to preserve state */}
+        <div style={{ height: '100%', display: activeSubTab === 'harvesters' ? 'block' : 'none' }}>
+          <HarvestersTab />
+        </div>
+        <div style={{ height: '100%', display: activeSubTab === 'datasources' ? 'block' : 'none' }}>
+          <DataSourcesTab />
+        </div>
+        <div style={{ height: '100%', display: activeSubTab === 'schedule' ? 'block' : 'none' }}>
+          <HarvestScheduleTab />
+        </div>
+        <div style={{ height: '100%', display: activeSubTab === 'tools' ? 'block' : 'none' }}>
+          <ToolsTab />
+        </div>
       </div>
     </div>
   );

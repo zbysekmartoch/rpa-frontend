@@ -281,6 +281,7 @@ export default function AnalysisExecutionTab() {
             defaultColDef={defaultColDef}
             rowSelection={{ mode: 'singleRow' }}
             onRowClicked={onRowClicked}
+            getRowClass={(params) => params.data?.id === active?.id ? 'ag-row-active' : ''}
             tooltipShowDelay={300}
           />
         </div>

@@ -450,6 +450,7 @@ export default function HarvestScheduleTab() {
               defaultColDef={defaultColDef}
               rowSelection={{ mode: 'singleRow' }}
               onRowClicked={onRowClicked}
+              getRowClass={(params) => params.data?.id === activeSchedule?.id ? 'ag-row-active' : ''}
               tooltipShowDelay={300}
             />
           </div>

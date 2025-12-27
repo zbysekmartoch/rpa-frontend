@@ -208,6 +208,21 @@ button:focus-visible {
   border-color: #dc2626;
 }
 
+/* ===== AG Grid Active Row Highlight ===== */
+.ag-theme-quartz .ag-row-active {
+  background-color: #fef3c7 !important;
+  border-left: 3px solid #f59e0b !important;
+}
+
+.ag-theme-quartz .ag-row-active.ag-row-selected {
+  background-color: #fde68a !important;
+}
+
+/* Hover on active row */
+.ag-theme-quartz .ag-row-active:hover {
+  background-color: #fde68a !important;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

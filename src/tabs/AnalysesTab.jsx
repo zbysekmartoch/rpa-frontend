@@ -45,9 +45,14 @@ export default function AnalysisTab() {
       </div>
 
       {/* Sub-tabs content */}
-      <div style={{ border: '1px solid #012345', padding: 10, background: '#fff', height: 'calc(100% - 60px)' }}>
-        {activeSubTab === 'execution' && <AnalysisExecutionTab />}
-        {activeSubTab === 'definition' && <AnalysisDefinitionTab />}
+      <div style={{ border: '1px solid #012345', padding: 10, background: '#fff', height: 'calc(100% - 60px)', position: 'relative' }}>
+        {/* All tabs rendered but hidden to preserve state */}
+        <div style={{ height: '100%', display: activeSubTab === 'execution' ? 'block' : 'none' }}>
+          <AnalysisExecutionTab />
+        </div>
+        <div style={{ height: '100%', display: activeSubTab === 'definition' ? 'block' : 'none' }}>
+          <AnalysisDefinitionTab />
+        </div>
       </div>
     </div>
   );

@@ -105,7 +105,7 @@ function AppContent() {
           <TabButton id="vysledky">{t('tabResults')}</TabButton>
           {showAdvancedUI && <TabButton id="sber">{t('tabHarvest')}</TabButton>}
         </div>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex' }}>
           <TabButton id="nastaveni">{t('tabSettings')}</TabButton>
         </div>
       </div>

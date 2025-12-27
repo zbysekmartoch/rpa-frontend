@@ -152,6 +152,7 @@ export default function ResultsTab() {
             defaultColDef={defaultColDef}
             rowSelection={{ mode: 'multiRow' }}
             onRowClicked={onRowClicked}
+            getRowClass={(params) => params.data?.id === active?.id ? 'ag-row-active' : ''}
             tooltipShowDelay={300}
           />
         </div>

@@ -410,6 +410,7 @@ export default function BasketsTab() {
               defaultColDef={defaultColDef}
               rowSelection={{ mode: 'singleRow', checkboxes: false }}
               onRowClicked={onBasketRowClicked}
+              getRowClass={(params) => params.data?.id === activeBasket?.id ? 'ag-row-active' : ''}
               tooltipShowDelay={300}
             />
           </div>
