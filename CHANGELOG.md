@@ -5,6 +5,90 @@ All notable changes to the RPA Frontend project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-19
+
+### Added
+
+#### Toast Notification System
+- **Toast.jsx** - Non-modal notification component replacing `alert()` calls
+  - Auto-dismiss with configurable duration (default 4s)
+  - Smooth fadeout animation
+  - Types: success (green), error (red), warning (yellow), info (blue)
+  - Click to dismiss functionality
+  - `useToast()` hook for global access
+
+#### Application Configuration
+- **appConfig.js** - Centralized configuration values
+  - `RESULT_LOG_POLL_INTERVAL_MS` - Polling interval for live logs (5s)
+  - `TOAST_DURATION_MS` - Toast notification duration (4s)
+
+#### FileManagerEditor Component
+- **FileManagerEditor.jsx** - Reusable file browser with Monaco editor
+  - Used in AnalysisDefinitionTab and DebugTab
+  - Collapsible folder tree with file counts
+  - PDF preview with blob URL (works in Chrome/Firefox)
+  - Image preview for common formats
+  - Folder-specific upload buttons
+  - Refresh button for file list
+  - Drag & drop upload to specific folders
+  - File size and modification date display
+
+#### Debug Tab
+- **DebugTab.jsx** - Analysis debugging interface
+  - Result selector dropdown with auto-refresh on focus
+  - Side-by-side view: result files | scripts
+  - Resizable splitter between panels
+  - Run in debug mode functionality
+  - Live progress tracking for running analyses
+  - Status polling for pending results
+
+#### Live Analysis Progress
+- Progress info bar in DebugTab and ResultsTab
+  - Current step / total steps display
+  - Current step name
+  - Step elapsed time
+  - Total analysis elapsed time
+  - Visual progress bar (ResultsTab)
+
+#### Live Log Streaming
+- **ResultsTab** - Real-time log viewer
+  - Auto-scrolling terminal-style display
+  - Error keyword highlighting (red background)
+  - Polling while analysis is running
+  - Open log in new window button
+  - Pulse animation for pending status
+
+### Changed
+
+#### UI Improvements
+- **AnalysesTab** - Definition sub-tab hidden in simple UI mode
+- **AnalysisExecutionTab** - Auto-save on form changes (debounced)
+  - No submit button - saves automatically
+  - Status indicator: saving / saved / error
+  - Delete analysis button added
+  - ID column hidden in simple UI mode
+  - ID badge shown in detail panel
+- **BasketsTab** - Toolbar reorganized
+  - Action buttons on the left
+  - Status and remove button on the right
+  - ID column hidden in simple UI mode
+- **ResultsTab** - Two-column layout
+  - Left: status, downloads, progress info
+  - Right: live log viewer
+  - Refresh button added
+
+#### Alert to Toast Migration
+- All `alert()` calls replaced with toast notifications
+- Affected tabs: ProductsTab, BasketsTab, AnalysisExecutionTab, DataSourcesTab, HarvestersTab, HarvestScheduleTab, ToolsTab, ResultsTab
+
+#### Workflow Widget
+- Updated translation keys for workflow selector
+- Simplified UI schema without row configuration
+
+### Fixed
+- Baskets dropdown in ProductsTab now refreshes on focus
+- PDF preview now works correctly in both Chrome and Firefox
+
 ## [2.1.0] - 2025-12-27
 
 ### Added

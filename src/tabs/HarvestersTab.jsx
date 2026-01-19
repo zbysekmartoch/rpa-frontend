@@ -6,11 +6,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
+import { useToast } from '../components/Toast';
 
 // Status check interval in milliseconds (1 minute)
 const STATUS_CHECK_INTERVAL = 60 * 1000;
 
 export default function HarvestersTab() {
+  const toast = useToast();
   const [harvesters, setHarvesters] = useState([]);
   const [activeHarvester, setActiveHarvester] = useState(null);
   const [status, setStatus] = useState('');
@@ -152,9 +154,9 @@ export default function HarvestersTab() {
       setActiveHarvester(null);
       await reloadHarvesters();
     } catch {
-      alert('Error deleting harvester');
+      toast.error('Error deleting harvester');
     }
-  }, [activeHarvester, reloadHarvesters]);
+  }, [activeHarvester, reloadHarvesters, toast]);
 
   // Get live status from harvester API - renamed to Refresh Status
   const handleRefreshStatus = useCallback(async () => {

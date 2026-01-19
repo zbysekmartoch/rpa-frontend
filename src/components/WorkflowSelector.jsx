@@ -3,23 +3,22 @@ import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
 
 /**
- * WorkflowSelector - Custom widget for selecting and loading workflows
+ * WorkflowSelector - Custom widget for selecting a workflow by name
+ * 
+ * The selected workflow name is saved directly to settings as "workflow": "workflow_name"
+ * No workflow content is loaded - just the name is stored.
  * 
  * Props from RJSF:
- * - value: current workflow content (string)
+ * - value: current workflow name (string)
  * - onChange: callback to update the form data
  * - readonly: whether the field is readonly
  * - disabled: whether the field is disabled
  * - options: ui:options from uiSchema
  */
-export default function WorkflowSelector({ value, onChange, readonly, disabled, options }) {
+export default function WorkflowSelector({ value, onChange, readonly, disabled }) {
   const { t } = useLanguage();
   const [workflows, setWorkflows] = useState([]);
-  const [selectedWorkflow, setSelectedWorkflow] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const rows = options?.rows || 20;
 
   // Load list of available workflows
   useEffect(() => {
@@ -35,48 +34,25 @@ export default function WorkflowSelector({ value, onChange, readonly, disabled, 
       });
   }, [t]);
 
-  // Handle workflow selection and load its content
-  const handleWorkflowSelect = async (workflowName) => {
-    if (!workflowName) {
-      setSelectedWorkflow('');
-      return;
-    }
-
-    setSelectedWorkflow(workflowName);
-    setLoading(true);
-    setError('');
-
-    try {
-      const data = await fetchJSON(`/api/v1/workflows/${encodeURIComponent(workflowName)}`);
-      // Expecting {name: "...", content: "..."}
-      const content = data.content || data.workflow || '';
-      onChange(content);
-      setError('');
-    } catch (err) {
-      console.error('Error loading workflow content:', err);
-      setError(t('errorLoadingWorkflowContent'));
-    } finally {
-      setLoading(false);
-    }
+  // Handle workflow selection - just save the name, not the content
+  const handleWorkflowSelect = (workflowName) => {
+    onChange(workflowName);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Workflow selector */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <label style={{ fontWeight: 500, minWidth: 'fit-content' }}>
-          {t('loadWorkflow')}:
-        </label>
         <select
-          value={selectedWorkflow}
+          value={value || ''}
           onChange={(e) => handleWorkflowSelect(e.target.value)}
-          disabled={disabled || readonly || loading}
+          disabled={disabled || readonly}
           style={{
             padding: '6px 10px',
             border: '1px solid #d1d5db',
             borderRadius: 4,
-            minWidth: 200,
-            background: (disabled || readonly || loading) ? '#f3f4f6' : 'white'
+            minWidth: 250,
+            background: (disabled || readonly) ? '#f3f4f6' : 'white'
           }}
         >
           <option value="">{t('selectWorkflow')}</option>
@@ -90,11 +66,6 @@ export default function WorkflowSelector({ value, onChange, readonly, disabled, 
             );
           })}
         </select>
-        {loading && (
-          <span style={{ fontSize: 12, color: '#6b7280' }}>
-            {t('loading')}...
-          </span>
-        )}
       </div>
 
       {/* Error message */}
@@ -110,25 +81,22 @@ export default function WorkflowSelector({ value, onChange, readonly, disabled, 
         </div>
       )}
 
-      {/* Textarea for workflow content */}
-      <textarea
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        readOnly={readonly}
-        disabled={disabled}
-        rows={rows}
-        placeholder={t('workflowDescription')}
-        style={{
-          width: '100%',
-          padding: 8,
-          border: '1px solid #d1d5db',
+      {/* Display selected workflow */}
+      {value && (
+        <div style={{ 
+          padding: '8px 12px', 
+          background: '#dcfce7', 
+          color: '#166534', 
           borderRadius: 4,
-          fontFamily: 'monospace',
           fontSize: 13,
-          resize: 'vertical',
-          background: (disabled || readonly) ? '#f3f4f6' : 'white'
-        }}
-      />
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}>
+          <span>✓</span>
+          <span>{t('selectedWorkflow') || 'Vybraný workflow'}: <strong>{value}</strong></span>
+        </div>
+      )}
     </div>
   );
 }

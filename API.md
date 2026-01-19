@@ -238,6 +238,136 @@ Retrieve analysis results.
 }
 ```
 
+### GET /api/v1/results/{result_id}/files
+List files in result folder for debugging.
+
+**Response:**
+```json
+{
+  "items": [
+    {
+      "name": "output.json",
+      "path": "output.json",
+      "type": "file",
+      "isText": true,
+      "modified": "2026-01-18T10:30:00Z",
+      "size": 1234
+    },
+    {
+      "name": "logs",
+      "path": "logs",
+      "type": "directory",
+      "children": [
+        {
+          "name": "analysis.log",
+          "path": "logs/analysis.log",
+          "type": "file",
+          "isText": true,
+          "modified": "2026-01-18T10:30:00Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### GET /api/v1/results/{result_id}/files/content
+Get content of a specific file in result folder.
+
+**Query Parameters:**
+- `file` - Path to the file within result folder
+
+**Response:**
+```json
+{
+  "content": "File content as string..."
+}
+```
+
+### PUT /api/v1/results/{result_id}/files/content
+Update content of a file in result folder (for debugging).
+
+**Request Body:**
+```json
+{
+  "file": "path/to/file.json",
+  "content": "Updated file content..."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "File saved"
+}
+```
+
+### GET /api/v1/results/{result_id}/files/download
+Download a file from result folder.
+
+**Query Parameters:**
+- `file` - Path to the file within result folder
+
+**Response:** Binary file download
+
+### POST /api/v1/results/{result_id}/files/upload
+Upload a file to result folder (for debugging).
+
+**Request:** Multipart form data with file and optional targetPath
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "File uploaded"
+}
+```
+
+### DELETE /api/v1/results/{result_id}/files
+Delete a file from result folder.
+
+**Query Parameters:**
+- `file` - Path to the file to delete
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "File deleted"
+}
+```
+
+### POST /api/v1/results/{result_id}/debug
+Re-run analysis in debug mode using existing result folder.
+
+This endpoint allows re-running an analysis without creating a new result.
+The backend will use the existing result folder and files, allowing users
+to modify input files and re-execute the analysis scripts.
+
+**Request Body:**
+```json
+{
+  "resultId": 123,
+  "debugMode": true
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Analysis started in debug mode",
+  "resultId": 123
+}
+```
+
+**Notes:**
+- The `debugMode: true` flag tells the backend to reuse the existing result instead of creating a new one
+- The backend should update the result status to "running" or "pending"
+- All existing files in the result folder are preserved
+- Analysis scripts are re-executed with the (potentially modified) input files
+
 ## Data Harvesting
 
 ### GET /api/v1/harvesters

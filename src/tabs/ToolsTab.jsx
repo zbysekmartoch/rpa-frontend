@@ -3,8 +3,10 @@
  * Utility tools for data harvesting operations including manual import
  */
 import React, { useState } from 'react';
+import { useToast } from '../components/Toast';
 
 export default function ToolsTab() {
+  const toast = useToast();
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
@@ -16,7 +18,7 @@ export default function ToolsTab() {
         setSelectedFile(file);
         setUploadStatus('');
       } else {
-        alert('Please select a ZIP file');
+        toast.warning('Please select a ZIP file');
         event.target.value = '';
       }
     }

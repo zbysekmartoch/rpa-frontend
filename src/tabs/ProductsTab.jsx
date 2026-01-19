@@ -7,14 +7,16 @@
  * - Add to basket functionality
  * - Display modes: active category or selected categories
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { CategoryTree } from '../components/CategoryTree.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../components/Toast';
 
 export default function ProductsTab() {
   const { t } = useLanguage();
+  const toast = useToast();
   
   // UI state
   const [mode, setMode] = useState('active');     // 'active' | 'selected'
@@ -26,16 +28,19 @@ export default function ProductsTab() {
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState([]);
 
-  // Load available baskets for target selection
-  useEffect(() => {
-    fetchJSON('/api/v1/baskets')
-      .then(d => setBaskets(d.items || []))
-      .catch(() => setBaskets([]));
-  }, []);
-
   // Basket selection for adding products
   const [baskets, setBaskets] = useState([]);
   const [targetBasketId, setTargetBasketId] = useState('');
+
+  // Load baskets when dropdown is opened
+  const handleBasketsDropdownOpen = async () => {
+    try {
+      const d = await fetchJSON('/api/v1/baskets');
+      setBaskets(d.items || []);
+    } catch {
+      setBaskets([]);
+    }
+  };
 
   // Toggle category path in selected paths list
   const onTogglePath = (path) => {
@@ -55,8 +60,8 @@ export default function ProductsTab() {
   // Add selected products to target basket
   const handleAddToBasket = async () => {
     const bid = Number(targetBasketId);
-    if (!bid) { alert(t('selectTargetBasket')); return; }
-    if (selectedIds.length === 0) { alert(t('noProductsSelected')); return; }
+    if (!bid) { toast.warning(t('selectTargetBasket')); return; }
+    if (selectedIds.length === 0) { toast.warning(t('noProductsSelected')); return; }
 
     try {
       await fetch(`/api/v1/baskets/${bid}/products`, {
@@ -69,11 +74,11 @@ export default function ProductsTab() {
       }).then(r => {
         if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
       });
-      alert(t('productsAddedToBasket', { count: selectedIds.length }));
+      toast.success(t('productsAddedToBasket', { count: selectedIds.length }));
       // No further action needed; Baskets tab will reload data when opened
     } catch (e) {
       console.error(e);
-      alert(t('errorAddingToBasket'));
+      toast.error(t('errorAddingToBasket'));
     }
   };
 
@@ -106,6 +111,7 @@ export default function ProductsTab() {
               <select
                 value={targetBasketId}
                 onChange={(e) => setTargetBasketId(e.target.value)}
+                onFocus={handleBasketsDropdownOpen}
                 style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px' }}
               >
                 <option value="">{t('selectBasketPlaceholder')}</option>

@@ -9,7 +9,9 @@ import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
+import { useToast } from '../components/Toast';
 
 const asItems = (d) => (Array.isArray(d) ? d : (d?.items ?? []));
 
@@ -37,6 +39,8 @@ const UrlCellRenderer = (props) => {
 export default function BasketsTab() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { showAdvancedUI } = useSettings();
+  const toast = useToast();
 
   const [baskets, setBaskets] = useState([]);
   const [activeBasket, setActiveBasket] = useState(null);
@@ -85,22 +89,28 @@ export default function BasketsTab() {
   useEffect(() => { reloadProducts(activeBasket?.id); }, [activeBasket?.id, reloadProducts]);
 
   // --- Left grid: baskets
-  const basketCols = useMemo(() => ([
-    { headerName: t('id'), field: 'id', width: 90 },
-    { headerName: t('name'), field: 'name', flex: 1, minWidth: 180 },
-    { headerName: t('itemCount'), field: 'itemCount', width: 110 },
-    { 
-      headerName: t('ownership'), 
-      field: 'isShared', 
-      width: 120,
-      cellRenderer: (params) => {
-        if (params.data.isShared || params.data.usr_id === 0) {
-          return '🌐 ' + t('shared');
+  const basketCols = useMemo(() => {
+    const columns = [];
+    if (showAdvancedUI) {
+      columns.push({ headerName: t('id'), field: 'id', width: 90 });
+    }
+    columns.push(
+      { headerName: t('name'), field: 'name', flex: 1, minWidth: 180 },
+      { headerName: t('itemCount'), field: 'itemCount', width: 110 },
+      { 
+        headerName: t('ownership'), 
+        field: 'isShared', 
+        width: 120,
+        cellRenderer: (params) => {
+          if (params.data.isShared || params.data.usr_id === 0) {
+            return '🌐 ' + t('shared');
+          }
+          return '🔒 ' + t('private');
         }
-        return '🔒 ' + t('private');
       }
-    },
-  ]), [t]);
+    );
+    return columns;
+  }, [t, showAdvancedUI]);
   const onBasketRowClicked = useCallback((e) => {
     setActiveBasket(e.data);
   }, []);
@@ -163,8 +173,8 @@ export default function BasketsTab() {
   // --- Delete selected products from basket
   const handleRemoveSelected = useCallback(async () => {
     const bid = activeBasket?.id;
-    if (!bid) { alert(t('selectBasketFirst')); return; }
-    if (selectedIds.length === 0) { alert(t('noProductsSelectedRight')); return; }
+    if (!bid) { toast.warning(t('selectBasketFirst')); return; }
+    if (selectedIds.length === 0) { toast.warning(t('noProductsSelectedRight')); return; }
 
     // Confirmation (optional)
     if (!confirm(t('confirmRemoveProducts', { count: selectedIds.length, basketName: activeBasket.name }))) return;
@@ -187,9 +197,9 @@ export default function BasketsTab() {
       setSelectedIds([]);
     } catch (e) {
       console.error(e);
-      alert(t('errorRemovingFromBasket'));
+      toast.error(t('errorRemovingFromBasket'));
     }
-  }, [activeBasket, selectedIds, reloadProducts, reloadBaskets, t]);
+  }, [activeBasket, selectedIds, reloadProducts, reloadBaskets, t, toast]);
 
   // --- Add basket
   const handleAddBasket = useCallback(async () => {
@@ -212,9 +222,9 @@ export default function BasketsTab() {
       setAdding(false);
       await reloadBaskets();
     } catch {
-      alert(t('errorAddingBasket'));
+      toast.error(t('errorAddingBasket'));
     }
-  }, [newName, newIsShared, reloadBaskets, t]);
+  }, [newName, newIsShared, reloadBaskets, t, toast]);
 
   // --- Delete basket
   const handleDeleteBasket = useCallback(async () => {
@@ -227,9 +237,9 @@ export default function BasketsTab() {
       setProducts([]);
       await reloadBaskets();
     } catch {
-      alert(t('errorDeletingBasket'));
+      toast.error(t('errorDeletingBasket'));
     }
-  }, [activeBasket, reloadBaskets, t]);
+  }, [activeBasket, reloadBaskets, t, toast]);
 
   const handleRenameBasket = useCallback(async () => {
     if (!activeBasket || !renameValue.trim()) return;
@@ -243,9 +253,9 @@ export default function BasketsTab() {
       setRenameValue('');
       await reloadBaskets();
     } catch {
-      alert(t('errorRenamingBasket'));
+      toast.error(t('errorRenamingBasket'));
     }
-  }, [activeBasket, renameValue, reloadBaskets, t]);
+  }, [activeBasket, renameValue, reloadBaskets, t, toast]);
 
   // --- Change basket ownership
   const handleUpdateOwnership = useCallback(async () => {
@@ -271,134 +281,115 @@ export default function BasketsTab() {
       setStatus(t('ownershipUpdated'));
     } catch (error) {
       if (error.message.includes('403')) {
-        alert(t('errorPermissionDenied'));
+        toast.error(t('errorPermissionDenied'));
       } else {
-        alert(t('errorUpdatingOwnership'));
+        toast.error(t('errorUpdatingOwnership'));
       }
     }
-  }, [activeBasket, editIsShared, user, reloadBaskets, t]);
+  }, [activeBasket, editIsShared, user, reloadBaskets, t, toast]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 18, fontWeight: 600 }}>{t('baskets')}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Add basket */}
-          {adding ? (
-            <>
+      {/* Toolbar - all buttons on the left */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        {/* Add basket */}
+        {adding ? (
+          <>
+            <input
+              autoFocus
+              type="text"
+              placeholder={t('newBasketPlaceholder')}
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddBasket();
+                if (e.key === 'Escape') { setAdding(false); setNewName(''); setNewIsShared(false); }
+              }}
+              style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
               <input
-                autoFocus
-                type="text"
-                placeholder={t('newBasketPlaceholder')}
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleAddBasket();
-                  if (e.key === 'Escape') { setAdding(false); setNewName(''); setNewIsShared(false); }
-                }}
-                style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
+                type="checkbox"
+                checked={newIsShared}
+                onChange={e => setNewIsShared(e.target.checked)}
+                style={{ cursor: 'pointer' }}
               />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-                <input
-                  type="checkbox"
-                  checked={newIsShared}
-                  onChange={e => setNewIsShared(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span>{t('sharedBasket')}</span>
-              </label>
-              <button
-                className="btn btn-add"
-                onClick={handleAddBasket}
-                disabled={!newName.trim()}
-              >
-                {t('add')}
-              </button>
-              <button
-                className="btn btn-cancel"
-                onClick={() => { setAdding(false); setNewName(''); setNewIsShared(false); }}
-              >
-                {t('cancel')}
-              </button>
-            </>
-          ) : (
+              <span>{t('sharedBasket')}</span>
+            </label>
             <button
               className="btn btn-add"
-              onClick={() => setAdding(true)}
-              title={t('addBasketTooltip')}
+              onClick={handleAddBasket}
+              disabled={!newName.trim()}
             >
-              + {t('addBasket')}
+              {t('add')}
             </button>
-          )}
-          
-          {/* Delete basket */}
+            <button
+              className="btn btn-cancel"
+              onClick={() => { setAdding(false); setNewName(''); setNewIsShared(false); }}
+            >
+              {t('cancel')}
+            </button>
+          </>
+        ) : (
           <button
-            className="btn btn-delete"
-            onClick={handleDeleteBasket}
-            disabled={!activeBasket}
-            title={t('deleteBasketTooltip')}
+            className="btn btn-add"
+            onClick={() => setAdding(true)}
+            title={t('addBasketTooltip')}
           >
-            {t('deleteBasket')}
+            + {t('addBasket')}
           </button>
+        )}
+        
+        {/* Delete basket */}
+        <button
+          className="btn btn-delete"
+          onClick={handleDeleteBasket}
+          disabled={!activeBasket}
+          title={t('deleteBasketTooltip')}
+        >
+          {t('deleteBasket')}
+        </button>
 
-          {/* Rename basket */}
-          {renaming ? (
-            <>
-              <input
-                autoFocus
-                type="text"
-                value={renameValue}
-                placeholder={t('newBasketNamePlaceholder')}
-                onChange={e => setRenameValue(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleRenameBasket();
-                  if (e.key === 'Escape') { setRenaming(false); setRenameValue(''); }
-                }}
-                style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
-              />
-              <button
-                className="btn btn-edit"
-                onClick={handleRenameBasket}
-                disabled={!renameValue.trim()}
-              >
-                {t('save')}
-              </button>
-              <button
-                className="btn btn-cancel"
-                onClick={() => { setRenaming(false); setRenameValue(''); }}
-              >
-                {t('cancel')}
-              </button>
-            </>
-          ) : (
+        {/* Rename basket */}
+        {renaming ? (
+          <>
+            <input
+              autoFocus
+              type="text"
+              value={renameValue}
+              placeholder={t('newBasketNamePlaceholder')}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleRenameBasket();
+                if (e.key === 'Escape') { setRenaming(false); setRenameValue(''); }
+              }}
+              style={{ padding: 4, borderRadius: 6, border: '1px solid #ccc', minWidth: 120 }}
+            />
             <button
               className="btn btn-edit"
-              onClick={() => { setRenaming(true); setRenameValue(activeBasket?.name || ''); }}
-              disabled={!activeBasket}
-              title={t('renameBasketTooltip')}
+              onClick={handleRenameBasket}
+              disabled={!renameValue.trim()}
             >
-              {t('renameBasket')}
+              {t('save')}
             </button>
-          )}
-
-          <div style={{ color: '#6b7280', fontSize: 13, marginRight: 8 }}>
-            {status || (activeBasket ? 
-              t('activeBasketStatus', { basketName: activeBasket.name, basketId: activeBasket.id }) : 
-              t('selectBasket')
-            )}
-          </div>
-          
-          {/* Remove selected products */}
+            <button
+              className="btn btn-cancel"
+              onClick={() => { setRenaming(false); setRenameValue(''); }}
+            >
+              {t('cancel')}
+            </button>
+          </>
+        ) : (
           <button
-            className="btn btn-delete"
-            onClick={handleRemoveSelected}
-            disabled={!activeBasket || selectedIds.length === 0}
-            title={t('removeSelectedTooltip')}
+            className="btn btn-edit"
+            onClick={() => { setRenaming(true); setRenameValue(activeBasket?.name || ''); }}
+            disabled={!activeBasket}
+            title={t('renameBasketTooltip')}
           >
-            {t('removeSelected')}
+            {t('renameBasket')}
           </button>
-        </div>
+        )}
+
       </div>
 
       {/* Two columns: baskets | products */}
@@ -471,6 +462,28 @@ export default function BasketsTab() {
                   >{t('editOwnership')}</button>
                 )
               )}
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+
+                {/* Status */}
+                <div style={{ color: '#6b7280', fontSize: 13 }}>
+                {status || (activeBasket ? 
+                    t('activeBasketStatus', { basketName: activeBasket.name, basketId: activeBasket.id }) : 
+                    t('selectBasket')
+                )}
+                </div>
+                
+                {/* Remove selected products */}
+                <button
+                className="btn btn-delete"
+                onClick={handleRemoveSelected}
+                disabled={!activeBasket || selectedIds.length === 0}
+                title={t('removeSelectedTooltip')}
+                >
+                {t('removeSelected')}
+                </button>
+
+
             </div>
           )}
           <div className="ag-theme-quartz" style={getGridContainerStyle({ height: 'calc(100% - 24px)' })}>

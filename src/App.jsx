@@ -12,10 +12,12 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import AuthPage from './components/AuthPage';
+import { ToastProvider } from './components/Toast';
 import ProductsTab from './tabs/ProductsTab.jsx';
 import BasketsTab from './tabs/BasketsTab.jsx';
 import AnalysesTab from './tabs/AnalysesTab.jsx';
 import ResultsTab from './tabs/ResultsTab';
+import DebugTab from './tabs/DebugTab';
 import HarvestTab from './tabs/HarvestTab.jsx';
 import SettingsTab from './tabs/SettingsTab';
 
@@ -103,6 +105,7 @@ function AppContent() {
           <TabButton id="kosiky">{t('tabBaskets')}</TabButton>
           <TabButton id="analytika">{t('tabAnalyses')}</TabButton>
           <TabButton id="vysledky">{t('tabResults')}</TabButton>
+          {showAdvancedUI && <TabButton id="debug">{t('tabDebug')}</TabButton>}
           {showAdvancedUI && <TabButton id="sber">{t('tabHarvest')}</TabButton>}
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex' }}>
@@ -129,6 +132,11 @@ function AppContent() {
           <ResultsTab />
         </div>
         {showAdvancedUI && (
+          <div style={{ display: tab === 'debug' ? 'block' : 'none', height: '100%' }}>
+            <DebugTab />
+          </div>
+        )}
+        {showAdvancedUI && (
           <div style={{ display: tab === 'sber' ? 'block' : 'none', height: '100%' }}>
             <HarvestTab />
           </div>
@@ -146,7 +154,9 @@ export default function App() {
     <LanguageProvider>
       <SettingsProvider>
         <AuthProvider>
-          <AuthApp />
+          <ToastProvider>
+            <AuthApp />
+          </ToastProvider>
         </AuthProvider>
       </SettingsProvider>
     </LanguageProvider>

@@ -4,12 +4,14 @@
  */
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useSettings } from '../context/SettingsContext';
 import AnalysisExecutionTab from './AnalysisExecutionTab.jsx';
 import AnalysisDefinitionTab from './AnalysisDefinitionTab.jsx';
 
 // Main component with sub-tabs
 export default function AnalysisTab() {
   const { t } = useLanguage();
+  const { showAdvancedUI } = useSettings();
   const [activeSubTab, setActiveSubTab] = useState('execution'); // 'execution' | 'definition'
 
   const SubTabButton = ({ id, children }) => (
@@ -41,7 +43,9 @@ export default function AnalysisTab() {
       {/* Sub-tabs navigation */}
       <div style={{ display: 'flex', gap: 8 }}>
         <SubTabButton id="execution">{t('analysisExecution')}</SubTabButton>
-        <SubTabButton id="definition">{t('analysisDefinition')}</SubTabButton>
+        {showAdvancedUI && (
+          <SubTabButton id="definition">{t('analysisDefinition')}</SubTabButton>
+        )}
       </div>
 
       {/* Sub-tabs content */}
@@ -50,9 +54,11 @@ export default function AnalysisTab() {
         <div style={{ height: '100%', display: activeSubTab === 'execution' ? 'block' : 'none' }}>
           <AnalysisExecutionTab />
         </div>
-        <div style={{ height: '100%', display: activeSubTab === 'definition' ? 'block' : 'none' }}>
-          <AnalysisDefinitionTab />
-        </div>
+        {showAdvancedUI && (
+          <div style={{ height: '100%', display: activeSubTab === 'definition' ? 'block' : 'none' }}>
+            <AnalysisDefinitionTab />
+          </div>
+        )}
       </div>
     </div>
   );

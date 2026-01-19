@@ -2,15 +2,17 @@
  * Analysis Execution Tab
  * Configure and run analyses with form-based or JSON settings editor
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
+import { useSettings } from '../context/SettingsContext';
 import { getAnalysisSettingsSchema, getAnalysisSettingsUiSchema } from '../schemas/analysisSettings.js';
 import WorkflowSelector from '../components/WorkflowSelector.jsx';
 import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
+import { useToast } from '../components/Toast';
 
 // Optional simple JSON editor (can be replaced with jsoneditor/Monaco if needed)
 function JsonTextarea({ value, onChange }) {
@@ -31,6 +33,8 @@ function JsonTextarea({ value, onChange }) {
 // Component for "Analysis Execution" sub-tab
 export default function AnalysisExecutionTab() {
   const { t, language } = useLanguage();
+  const { showAdvancedUI } = useSettings();
+  const toast = useToast();
   
   // Left grid: analyses list
   const [rows, setRows] = useState([]);
@@ -133,11 +137,17 @@ export default function AnalysisExecutionTab() {
   }, [active]);
 
   // Left grid columns
-  const cols = useMemo(() => ([
-    { headerName: t('id'), field: 'id', width: 90 },
-    { headerName: t('name'), field: 'name', flex: 1, minWidth: 220 },
-    { headerName: t('created'), field: 'created_at', width: 170 },
-  ]), [t]);
+  const cols = useMemo(() => {
+    const columns = [];
+    if (showAdvancedUI) {
+      columns.push({ headerName: t('id'), field: 'id', width: 90 });
+    }
+    columns.push(
+      { headerName: t('name'), field: 'name', flex: 1, minWidth: 220 },
+      { headerName: t('created'), field: 'created_at', width: 170 }
+    );
+    return columns;
+  }, [t, showAdvancedUI]);
 
   // Cross-field validation for dates
   const customValidate = (formData, errors) => {
@@ -148,9 +158,13 @@ export default function AnalysisExecutionTab() {
     return errors;
   };
 
-  // Save from form
-  const handleSubmit = async ({ formData }) => {
+  // Auto-save: save settings silently when form data changes
+  const saveTimeoutRef = useRef(null);
+  const [saveStatus, setSaveStatus] = useState(''); // 'saving' | 'saved' | 'error' | ''
+
+  const autoSave = useCallback(async (name, settings) => {
     if (!active?.id) return;
+    setSaveStatus('saving');
     try {
       await fetch(`/api/v1/analyses/${active.id}`, {
         method: 'PUT',
@@ -158,46 +172,72 @@ export default function AnalysisExecutionTab() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify({ name: draftName, settings: formData }),
+        body: JSON.stringify({ name, settings }),
       }).then(r => { if (!r.ok) throw new Error(`${r.status}`); });
 
-      // Refresh list and detail
+      // Refresh list silently
       const d = await fetchJSON('/api/v1/analyses');
       setRows(d.items || []);
-      const detail = await fetchJSON(`/api/v1/analyses/${active.id}`);
-      setActive(detail);
-      setDraftSettings(detail.settings || {});
-      alert(t('saved'));
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(''), 2000);
     } catch (e) {
       console.error(e);
-      alert(t('saveFailed'));
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(''), 3000);
     }
-  };
+  }, [active?.id]);
 
-  // Save from JSON editor
-  const handleSaveJson = async () => {
-    if (!active?.id) return;
-    try {
-      await fetch(`/api/v1/analyses/${active.id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({ name: draftName, settings: draftSettings }),
-      }).then(r => { if (!r.ok) throw new Error(`${r.status}`); });
-
-      const d = await fetchJSON('/api/v1/analyses');
-      setRows(d.items || []);
-      const detail = await fetchJSON(`/api/v1/analyses/${active.id}`);
-      setActive(detail);
-      setDraftSettings(detail.settings || {});
-      alert(t('saved'));
-    } catch (e) {
-      console.error(e);
-      alert(t('saveFailed'));
+  // Debounced auto-save on form change
+  const handleFormChange = useCallback((e) => {
+    const newSettings = e.formData;
+    setDraftSettings(newSettings);
+    
+    // Clear previous timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
-  };
+    
+    // Debounce save by 500ms
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSave(draftName, newSettings);
+    }, 500);
+  }, [draftName, autoSave]);
+
+  // Save on name change
+  const handleNameChange = useCallback((e) => {
+    const newName = e.target.value;
+    setDraftName(newName);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSave(newName, draftSettings);
+    }, 500);
+  }, [draftSettings, autoSave]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // JSON editor change handler with auto-save
+  const handleJsonChange = useCallback((newSettings) => {
+    setDraftSettings(newSettings);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSave(draftName, newSettings);
+    }, 500);
+  }, [draftName, autoSave]);
 
   // Add new analysis
   const handleAdd = async () => {
@@ -213,7 +253,7 @@ export default function AnalysisExecutionTab() {
       const d = await fetchJSON('/api/v1/analyses');
       setRows(d.items || []);
     } catch  {
-      alert(t('errorCreatingAnalysis'));
+      toast.error(t('errorCreatingAnalysis'));
     }
   };
 
@@ -223,9 +263,29 @@ export default function AnalysisExecutionTab() {
       await fetchJSON(`/api/v1/analyses/${active.id}/run`, {
         method: 'POST'
       });
-      alert(t('analysisStarted'));
+      toast.success(t('analysisStarted'));
     } catch (e) {
-      alert(t('errorStartingAnalysis') + ': ' + (e.message || e));
+      toast.error(t('errorStartingAnalysis') + ': ' + (e.message || e));
+    }
+  };
+
+  // Delete analysis
+  const handleDelete = async () => {
+    if (!active?.id) return;
+    if (!confirm(t('confirmDeleteAnalysis') || `Opravdu smazat analýzu "${active.name}"?`)) return;
+    
+    try {
+      await fetchJSON(`/api/v1/analyses/${active.id}`, {
+        method: 'DELETE'
+      });
+      setActive(null);
+      setDraftName('');
+      setDraftSettings({});
+      const d = await fetchJSON('/api/v1/analyses');
+      setRows(d.items || []);
+      toast.success(t('analysisDeleted') || 'Analýza smazána');
+    } catch {
+      toast.error(t('errorDeletingAnalysis') || 'Chyba při mazání analýzy');
     }
   };
 
@@ -269,13 +329,23 @@ export default function AnalysisExecutionTab() {
               </button>
             </>
           ) : (
-            <button
-              className="btn btn-add"
-              onClick={() => setAdding(true)}
-              title={t('addAnalysisTooltip')}
-            >
-              + {t('addAnalysis')}
-            </button>
+            <>
+              <button
+                className="btn btn-add"
+                onClick={() => setAdding(true)}
+                title={t('addAnalysisTooltip')}
+              >
+                + {t('addAnalysis')}
+              </button>
+              <button
+                className="btn btn-delete"
+                onClick={handleDelete}
+                disabled={!active}
+                title={t('deleteAnalysisTooltip') || 'Smazat analýzu'}
+              >
+                {t('deleteAnalysis') || 'Smazat'}
+              </button>
+            </>
           )}
         </div>
 
@@ -286,7 +356,7 @@ export default function AnalysisExecutionTab() {
             rowData={rows}
             columnDefs={cols}
             defaultColDef={defaultColDef}
-            rowSelection={{ mode: 'singleRow' }}
+            rowSelection={{ mode: 'singleRow' , checkboxes: false}}
             onRowClicked={onRowClicked}
             getRowClass={(params) => params.data?.id === active?.id ? 'ag-row-active' : ''}
             tooltipShowDelay={300}
@@ -303,11 +373,22 @@ export default function AnalysisExecutionTab() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {active && (
+              <span style={{ 
+                fontSize: 12, 
+                color: '#6b7280',
+                background: '#f3f4f6',
+                padding: '4px 8px',
+                borderRadius: 4
+              }}>
+                ID: {active.id}
+              </span>
+            )}
             <input
               type="text"
               placeholder={t('analysisNamePlaceholder')}
               value={draftName}
-              onChange={(e) => setDraftName(e.target.value)}
+              onChange={handleNameChange}
               style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', minWidth: 260 }}
               disabled={!active}
             />
@@ -333,22 +414,19 @@ export default function AnalysisExecutionTab() {
               {t('runAnalysis')}
             </button>
 
-            {mode === 'form' ? (
-              <button
-                className="btn btn-edit"
-                onClick={() => document.getElementById('analysis-rjsf-save')?.click()}
-                disabled={!active}
-              >
-                {t('save')}
-              </button>
-            ) : (
-              <button
-                className="btn btn-edit"
-                onClick={handleSaveJson}
-                disabled={!active}
-              >
-                {t('saveJson')}
-              </button>
+            {/* Auto-save status indicator */}
+            {saveStatus && (
+              <span style={{ 
+                fontSize: 13, 
+                color: saveStatus === 'error' ? '#dc2626' : saveStatus === 'saving' ? '#6b7280' : '#16a34a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}>
+                {saveStatus === 'saving' && '⏳ ' + t('saving')}
+                {saveStatus === 'saved' && '✓ ' + t('saved')}
+                {saveStatus === 'error' && '✗ ' + t('saveFailed')}
+              </span>
             )}
           </div>
         </div>
@@ -363,16 +441,16 @@ export default function AnalysisExecutionTab() {
               uiSchema={uiSchema}
               validator={validator}
               customValidate={customValidate}
-              onChange={(e) => setDraftSettings(e.formData)}
-              onSubmit={handleSubmit}
+              onChange={handleFormChange}
               widgets={widgets}
             >
-              <button id="analysis-rjsf-save" type="submit" style={{ display: 'none' }}>Save</button>
+              {/* No submit button - auto-save on change */}
+              <></>
             </Form>
           )}
 
           {active && mode === 'json' && (
-            <JsonTextarea value={draftSettings} onChange={setDraftSettings} />
+            <JsonTextarea value={draftSettings} onChange={handleJsonChange} />
           )}
         </div>
       </section>

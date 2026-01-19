@@ -26,8 +26,8 @@ export const getAnalysisSettingsSchema = (language = 'cz') => {
       },
       "workflow": {
         "type": "string",
-        "title": t('scriptSequence'),
-        "description": t('workflowDescription')
+        "title": t('workflow'),
+        "description": t('workflowSelectDescription')
       }
     },
     "additionalProperties": false
@@ -53,10 +53,7 @@ export const getAnalysisSettingsUiSchema = (language = 'cz') => {
     },
     workflow: {
       "ui:widget": "WorkflowWidget",
-      "ui:options": {
-        rows: 20
-      },
-      "ui:help": t('workflowHelp')
+      "ui:help": t('workflowSelectHelp')
     }
   };
 };

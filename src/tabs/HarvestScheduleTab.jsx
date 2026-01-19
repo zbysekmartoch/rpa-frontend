@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
+import { useToast } from '../components/Toast';
 
 // Function to interpret cron expression into human-readable text
 function interpretCronExpression(cron) {
@@ -106,6 +107,7 @@ function interpretCronExpression(cron) {
 }
 
 export default function HarvestScheduleTab() {
+  const toast = useToast();
   const [schedules, setSchedules] = useState([]);
   const [activeSchedule, setActiveSchedule] = useState(null);
   const [status, setStatus] = useState('');
@@ -249,9 +251,9 @@ export default function HarvestScheduleTab() {
       setAdding(false);
       await reloadSchedules();
     } catch {
-      alert('Error adding harvest schedule');
+      toast.error('Error adding harvest schedule');
     }
-  }, [editData, reloadSchedules]);
+  }, [editData, reloadSchedules, toast]);
 
   // Delete harvest schedule
   const handleDelete = useCallback(async () => {
@@ -262,9 +264,9 @@ export default function HarvestScheduleTab() {
       setActiveSchedule(null);
       await reloadSchedules();
     } catch {
-      alert('Error deleting harvest schedule');
+      toast.error('Error deleting harvest schedule');
     }
-  }, [activeSchedule, reloadSchedules]);
+  }, [activeSchedule, reloadSchedules, toast]);
 
   // Update harvest schedule
   const handleUpdate = useCallback(async () => {
@@ -286,9 +288,9 @@ export default function HarvestScheduleTab() {
       // Update active schedule with new data
       setActiveSchedule({...activeSchedule, ...updateData});
     } catch {
-      alert('Error updating harvest schedule');
+      toast.error('Error updating harvest schedule');
     }
-  }, [activeSchedule, editData, reloadSchedules]);
+  }, [activeSchedule, editData, reloadSchedules, toast]);
 
   // Import data from harvester
   const handleImport = useCallback(async () => {
@@ -317,16 +319,16 @@ export default function HarvestScheduleTab() {
         headers: { 'Content-Type': 'application/json' },
       });
       
-      alert('Import started successfully!');
+      toast.success('Import started successfully!');
       setShowingImportForm(false);
       setImportData({ from: '', to: '', screenshots: false, images: false });
       await reloadSchedules();
     } catch (error) {
-      alert('Error starting import: ' + (error.message || 'Unknown error'));
+      toast.error('Error starting import: ' + (error.message || 'Unknown error'));
     } finally {
       setImporting(false);
     }
-  }, [activeSchedule, importData, reloadSchedules]);
+  }, [activeSchedule, importData, reloadSchedules, toast]);
 
   // Get harvester status
   const getHarvesterStatus = useCallback(() => {

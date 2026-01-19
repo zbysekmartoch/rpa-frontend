@@ -6,8 +6,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react';
 import { fetchJSON } from '../lib/fetchJSON.js';
 import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
+import { useToast } from '../components/Toast';
 
 export default function DataSourcesTab() {
+  const toast = useToast();
   const [dataSources, setDataSources] = useState([]);
   const [activeSource, setActiveSource] = useState(null);
   const [status, setStatus] = useState('');
@@ -87,9 +89,9 @@ export default function DataSourcesTab() {
       setAdding(false);
       await reloadDataSources();
     } catch {
-      alert('Error adding data source');
+      toast.error('Error adding data source');
     }
-  }, [newName, reloadDataSources]);
+  }, [newName, reloadDataSources, toast]);
 
   // Delete data source
   const handleDelete = useCallback(async () => {
@@ -100,9 +102,9 @@ export default function DataSourcesTab() {
       setActiveSource(null);
       await reloadDataSources();
     } catch {
-      alert('Error deleting data source');
+      toast.error('Error deleting data source');
     }
-  }, [activeSource, reloadDataSources]);
+  }, [activeSource, reloadDataSources, toast]);
 
   // Update data source
   const handleUpdate = useCallback(async () => {
@@ -125,9 +127,9 @@ export default function DataSourcesTab() {
       // Update active source with new data
       setActiveSource({...activeSource, ...updateData});
     } catch {
-      alert('Error updating data source');
+      toast.error('Error updating data source');
     }
-  }, [activeSource, editData, reloadDataSources]);
+  }, [activeSource, editData, reloadDataSources, toast]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
