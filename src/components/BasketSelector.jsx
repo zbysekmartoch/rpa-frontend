@@ -3,59 +3,58 @@ import { fetchJSON } from '../lib/fetchJSON.js';
 import { useLanguage } from '../context/LanguageContext';
 
 /**
- * WorkflowSelector - Custom widget for selecting a workflow by name
+ * BasketSelector - Custom widget for selecting a basket
  * 
- * The selected workflow name is saved directly to settings as "workflow": "workflow_name"
- * No workflow content is loaded - just the name is stored.
+ * Refreshes basket list when dropdown is focused to show newly added baskets.
  * 
  * Props from RJSF:
- * - value: current workflow name (string)
+ * - value: current basket ID
  * - onChange: callback to update the form data
  * - readonly: whether the field is readonly
  * - disabled: whether the field is disabled
- * - options: ui:options from uiSchema
  */
-export default function WorkflowSelector({ value, onChange, readonly, disabled }) {
+export default function BasketSelector({ value, onChange, readonly, disabled }) {
   const { t } = useLanguage();
-  const [workflows, setWorkflows] = useState([]);
+  const [baskets, setBaskets] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Load workflows function (can be called on demand)
-  const loadWorkflows = useCallback(() => {
+  // Load baskets function (can be called on demand)
+  const loadBaskets = useCallback(() => {
     setLoading(true);
     setError('');
-    fetchJSON('/api/v1/workflows')
+    fetchJSON('/api/v1/baskets')
       .then(data => {
-        // Expecting either an array or {items: [...]}
-        const items = Array.isArray(data) ? data : (data?.items || data?.workflows || []);
-        setWorkflows(items);
+        const items = data?.items || [];
+        setBaskets(items);
       })
       .catch(err => {
-        console.error('Error loading workflows:', err);
-        setError(t('errorLoadingWorkflows'));
+        console.error('Error loading baskets:', err);
+        setError(t('errorLoadingBaskets') || 'Chyba při načítání košíků');
       })
       .finally(() => setLoading(false));
   }, [t]);
 
-  // Load list of available workflows on mount
+  // Load baskets on mount
   useEffect(() => {
-    loadWorkflows();
-  }, [loadWorkflows]);
+    loadBaskets();
+  }, [loadBaskets]);
 
-  // Handle workflow selection - just save the name, not the content
-  const handleWorkflowSelect = (workflowName) => {
-    onChange(workflowName);
+  // Handle basket selection
+  const handleBasketSelect = (basketId) => {
+    // Convert to number if it's a numeric string
+    const numericId = basketId && !isNaN(basketId) ? parseInt(basketId, 10) : basketId;
+    onChange(numericId || undefined);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Workflow selector */}
+      {/* Basket selector */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <select
           value={value || ''}
-          onChange={(e) => handleWorkflowSelect(e.target.value)}
-          onFocus={loadWorkflows}
+          onChange={(e) => handleBasketSelect(e.target.value)}
+          onFocus={loadBaskets}
           disabled={disabled || readonly}
           style={{
             padding: '6px 10px',
@@ -67,16 +66,12 @@ export default function WorkflowSelector({ value, onChange, readonly, disabled }
             cursor: loading ? 'wait' : 'pointer'
           }}
         >
-          <option value="">{t('selectWorkflow')}</option>
-          {workflows.map((wf) => {
-            // workflow can be either a string (name) or an object {name: "..."}
-            const name = typeof wf === 'string' ? wf : (wf.name || wf.id);
-            return (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            );
-          })}
+          <option value="">{t('selectBasket') || 'Vyberte košík'}</option>
+          {baskets.map((basket) => (
+            <option key={basket.id} value={basket.id}>
+              {basket.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -93,7 +88,7 @@ export default function WorkflowSelector({ value, onChange, readonly, disabled }
         </div>
       )}
 
-      {/* Display selected workflow */}
+      {/* Display selected basket */}
       {value && (
         <div style={{ 
           padding: '8px 12px', 
@@ -106,7 +101,9 @@ export default function WorkflowSelector({ value, onChange, readonly, disabled }
           gap: 8
         }}>
           <span>✓</span>
-          <span>{t('selectedWorkflow') || 'Vybraný workflow'}: <strong>{value}</strong></span>
+          <span>
+            {t('selectedBasket') || 'Vybraný košík'}: <strong>{baskets.find(b => b.id === value)?.name || value}</strong>
+          </span>
         </div>
       )}
     </div>

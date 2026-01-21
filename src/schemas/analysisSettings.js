@@ -48,7 +48,7 @@ export const getAnalysisSettingsUiSchema = (language = 'cz') => {
       "ui:help": t('dateToHelp')
     },
     basketId: { 
-      "ui:widget": "select", 
+      "ui:widget": "BasketWidget", 
       "ui:placeholder": t('selectBasketPlaceholder')
     },
     workflow: {

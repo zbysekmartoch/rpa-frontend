@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // vše pod /api pošleme na backend běžící na :3000
+      // Forward all /api requests to the backend running on :3000
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true

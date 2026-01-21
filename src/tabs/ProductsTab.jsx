@@ -84,7 +84,7 @@ export default function ProductsTab() {
 
   return (
     <div style={{ height: 'calc(100% - 50px)', display: 'flex', flexDirection: 'column' }}>
-      {/* Toolbar s přepínačem módu + počty */}
+      {/* Toolbar with mode switcher and counts */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 8 }}>
@@ -106,7 +106,7 @@ export default function ProductsTab() {
               {t('selected')}: <b>{selectedCount}</b>
             </span>
 
-            {/* 🔹 výběr cílového košíku + akce */}
+            {/* 🔹 Target basket selection + actions */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 8 }}>
               <select
                 value={targetBasketId}
@@ -133,7 +133,7 @@ export default function ProductsTab() {
         </div>
       </div>
 
-      {/* Dvousloupcový layout: strom vlevo, grid vpravo */}
+      {/* Two-column layout: tree on the left, grid on the right */}
       <div style={{ height: 'calc(100% - 00px)', display: 'flex', gap: 12 }}>
         <aside
           style={{

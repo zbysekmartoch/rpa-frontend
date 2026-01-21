@@ -100,6 +100,7 @@ export default function FileManagerEditor({
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedFileInfo, setSelectedFileInfo] = useState(null);
   const [fileContent, setFileContent] = useState('');
+  const [originalContent, setOriginalContent] = useState(''); // Track original content for detecting changes
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -272,7 +273,39 @@ export default function FileManagerEditor({
   }, [pdfBlobUrl]);
 
   // Load file content
-  const loadFileContent = useCallback(async (file) => {
+  const loadFileContent = useCallback(async (file, forceLoad = false) => {
+    // Check for unsaved changes before switching files (only if not in new window and editing)
+    if (!forceLoad && isEditing && fileContent !== originalContent && selectedFile && selectedFile !== file.path) {
+      const confirmMessage = t('unsavedChangesConfirm') || 
+        `Soubor "${selectedFile}" má neuložené změny. Chcete je uložit?\n\nUložit = OK, Zahodit = Cancel`;
+      
+      if (confirm(confirmMessage)) {
+        // User wants to save - save first, then switch
+        try {
+          const response = await fetch(`${apiBasePath}/content`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+              file: selectedFile,
+              content: fileContent
+            })
+          });
+          
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          toast.success(t('fileSaved') || 'Soubor uložen');
+        } catch (error) {
+          console.error('Error saving file:', error);
+          toast.error(t('errorSavingFile') || 'Chyba při ukládání souboru');
+          // Don't switch file if save failed
+          return;
+        }
+      }
+      // User chose to discard or save succeeded - continue with switching
+    }
+    
     // Clean up previous PDF blob URL
     if (pdfBlobUrl) {
       URL.revokeObjectURL(pdfBlobUrl);
@@ -338,13 +371,14 @@ export default function FileManagerEditor({
       
       const data = await response.json();
       setFileContent(data.content || '');
+      setOriginalContent(data.content || ''); // Track original for change detection
     } catch (error) {
       console.error('Error loading file content:', error);
       toast.error(t('errorLoadingFileContent') || 'Chyba při načítání obsahu souboru');
     } finally {
       setLoading(false);
     }
-  }, [apiBasePath, t, onFileSelect, toast, pdfBlobUrl]);
+  }, [apiBasePath, t, onFileSelect, toast, pdfBlobUrl, isEditing, fileContent, originalContent, selectedFile]);
 
   // Save file content
   const saveFileContent = useCallback(async () => {
@@ -367,6 +401,7 @@ export default function FileManagerEditor({
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
       setIsEditing(false);
+      setOriginalContent(fileContent); // Update original content after successful save
       toast.success(t('fileSaved') || 'Soubor uložen');
     } catch (error) {
       console.error('Error saving file:', error);

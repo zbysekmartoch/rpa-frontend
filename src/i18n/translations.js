@@ -1,5 +1,5 @@
 export const translations = {
-  cz: {  // <- změna z "cs" na "cz"
+  cz: {  // <- changed from "cs" to "cz"
     // App level
     appTitle: 'Retail Prices Analyzer',
     loggedInAs: 'Přihlášen:',
@@ -81,6 +81,7 @@ export const translations = {
     workflowLoaded: 'Workflow načteno',
     errorLoadingWorkflows: 'Chyba načítání seznamu workflows',
     errorLoadingWorkflowContent: 'Chyba načítání obsahu workflow',
+    unsavedChangesConfirm: 'Soubor má neuložené změny. Chcete je uložit?\n\nOK = Uložit, Cancel = Zahodit',
     
     // Products
     displayMode: 'Zobrazení',
@@ -333,6 +334,7 @@ export const translations = {
     workflowLoaded: 'Workflow loaded',
     errorLoadingWorkflows: 'Error loading workflows list',
     errorLoadingWorkflowContent: 'Error loading workflow content',
+    unsavedChangesConfirm: 'File has unsaved changes. Do you want to save them?\n\nOK = Save, Cancel = Discard',
     
     // Products
     displayMode: 'Display',
@@ -586,6 +588,7 @@ export const translations = {
     workflowLoaded: 'Workflow načítané',
     errorLoadingWorkflows: 'Chyba načítania zoznamu workflows',
     errorLoadingWorkflowContent: 'Chyba načítania obsahu workflow',
+    unsavedChangesConfirm: 'Súbor má neuložené zmeny. Chcete ich uložiť?\n\nOK = Uložiť, Cancel = Zahodiť',
     
     // Products
     displayMode: 'Zobrazenie',

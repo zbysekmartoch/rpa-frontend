@@ -477,10 +477,14 @@ export default function DebugTab() {
 
       {/* CSS for pulse animation */}
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
+@keyframes pulse {
+  0%, 100% {   
+    box-shadow: inset #ff000000 0 0 8px 4px;
+  }
+  50% {
+    box-shadow: inset #ff0000 0 0 8px 4px;
+  }
+}
       `}</style>
     </div>
   );

@@ -143,22 +143,22 @@ export default function ProductTable({ mode, activePath, selectedPaths, onActive
       <div className="flex items-center justify-between mb-3">
         <div className="text-sm text-neutral-600 dark:text-neutral-300 flex items-center gap-3">
           {mode === 'active'
-            ? <span>Aktivní kategorie: {activePath ? <code className="px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded">{activePath}</code> : '(nic)'}</span>
-            : <span>Označené kategorie: {selectedPaths.length}</span>}
+            ? <span>Active category: {activePath ? <code className="px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded">{activePath}</code> : '(none)'}</span>
+            : <span>Selected categories: {selectedPaths.length}</span>}
           <span>|</span>
-          <span>Vybráno: {Object.keys(rowSelection).length}</span>
-          {activeId && <span>| Aktivní záznam: <code>{activeId}</code></span>}
+          <span>Selected: {Object.keys(rowSelection).length}</span>
+          {activeId && <span>| Active record: <code>{activeId}</code></span>}
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 rounded border hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setRowSelection({})}>Zrušit výběr</button>
-          <button className="px-3 py-1.5 rounded border hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setSorting([])}>Zrušit třídění</button>
+          <button className="px-3 py-1.5 rounded border hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setRowSelection({})}>Clear selection</button>
+          <button className="px-3 py-1.5 rounded border hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setSorting([])}>Clear sorting</button>
         </div>
       </div>
 
-      {/* jen tabulka scroluje */}
+      {/* Only the table scrolls */}
       <div className="relative flex-1 border rounded-2xl overflow-auto">
         <table className="w-full text-sm">
-          {/* sticky, světlejší hlavička */}
+          {/* Sticky, lighter header */}
           <thead className="sticky top-0 z-10 bg-neutral-50/95 backdrop-blur border-b">
             {table.getHeaderGroups().map(hg => (
               <tr key={hg.id} className="text-left">
@@ -173,7 +173,7 @@ export default function ProductTable({ mode, activePath, selectedPaths, onActive
                       <div
                         className="flex items-end gap-1 cursor-pointer"
                         onClick={header.column.getToggleSortingHandler()}
-                        title="Klik pro třídění, Shift+klik pro sekundární třídění"
+                        title="Click to sort, Shift+click for secondary sorting"
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {{ asc: '▲', desc: '▼' }[header.column.getIsSorted()] || null}
@@ -196,16 +196,16 @@ export default function ProductTable({ mode, activePath, selectedPaths, onActive
             ))}
           </thead>
 
-          {/* striped, světlejší řádky */}
+          {/* Striped, lighter rows */}
           <tbody className="[&>tr:nth-child(odd)]:bg-white [&>tr:nth-child(even)]:bg-neutral-50">
             {loading && (
-              <tr><td colSpan={table.getAllLeafColumns().length} className="p-3">Načítám…</td></tr>
+              <tr><td colSpan={table.getAllLeafColumns().length} className="p-3">Loading…</td></tr>
             )}
             {error && (
-              <tr><td colSpan={table.getAllLeafColumns().length} className="p-3 text-red-600">Chyba: {String(error.message)}</td></tr>
+              <tr><td colSpan={table.getAllLeafColumns().length} className="p-3 text-red-600">Error: {String(error.message)}</td></tr>
             )}
             {!loading && !error && table.getRowModel().rows.length === 0 && (
-              <tr><td colSpan={table.getAllLeafColumns().length} className="p-3 text-neutral-500">Žádná data</td></tr>
+              <tr><td colSpan={table.getAllLeafColumns().length} className="p-3 text-neutral-500">No data</td></tr>
             )}
             {table.getRowModel().rows.map(row => (
               <tr

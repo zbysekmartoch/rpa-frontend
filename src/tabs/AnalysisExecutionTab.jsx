@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useSettings } from '../context/SettingsContext';
 import { getAnalysisSettingsSchema, getAnalysisSettingsUiSchema } from '../schemas/analysisSettings.js';
 import WorkflowSelector from '../components/WorkflowSelector.jsx';
+import BasketSelector from '../components/BasketSelector.jsx';
 import { defaultColDef, commonGridProps, getGridContainerStyle } from '../lib/gridConfig.js';
 import { useToast } from '../components/Toast';
 
@@ -49,57 +50,18 @@ export default function AnalysisExecutionTab() {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
 
-  const [baskets, setBaskets] = useState([]);
-
-  // Load baskets list
-  useEffect(() => {
-    fetchJSON('/api/v1/baskets')
-      .then(data => setBaskets(data.items || []))
-      .catch(() => setBaskets([]));
-  }, []);
-
   // Dynamic schema based on language
   const baseSchema = useMemo(() => getAnalysisSettingsSchema(language), [language]);
   const baseUiSchema = useMemo(() => getAnalysisSettingsUiSchema(language), [language]);
 
-  // Dynamic schema for basket select
-  const schema = useMemo(() => {
-    if (!baskets.length) return active?.schema ?? baseSchema;
-    const base = { ...(active?.schema ?? baseSchema) };
-    return {
-      ...base,
-      properties: {
-        ...base.properties,
-        basketId: {
-          ...base.properties.basketId,
-          enum: baskets.map(b => b.id),
-          enumNames: baskets.map(b => b.name)
-        }
-      }
-    };
-  }, [baskets, active, baseSchema]);
-
-  // Dynamic uiSchema for basket select
-  const uiSchema = useMemo(() => {
-    if (!baskets.length) return baseUiSchema;
-    return {
-      ...baseUiSchema,
-      basketId: {
-        ...baseUiSchema.basketId,
-        "ui:options": {
-          ...baseUiSchema.basketId?.["ui:options"],
-          enumOptions: baskets.map(b => ({
-            value: b.id,
-            label: b.name
-          }))
-        }
-      }
-    };
-  }, [baskets, baseUiSchema]);
+  // Use active schema if provided, otherwise use base schema
+  const schema = useMemo(() => active?.schema ?? baseSchema, [active, baseSchema]);
+  const uiSchema = baseUiSchema;
 
   // Custom widgets for RJSF
   const widgets = useMemo(() => ({
-    WorkflowWidget: WorkflowSelector
+    WorkflowWidget: WorkflowSelector,
+    BasketWidget: BasketSelector
   }), []);
 
   // Load analyses list

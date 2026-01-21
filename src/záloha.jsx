@@ -6,7 +6,7 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-// --- Strom kategorií napojený na data (aktivní kategorie + označené kategorie)
+// --- Category tree connected to data (active category + selected categories)
 function CategoryTree({ selectedPaths, onTogglePath, activePath, onActivate }) {
   const [tree, setTree] = useState([]);
   useEffect(() => {
@@ -18,7 +18,7 @@ function CategoryTree({ selectedPaths, onTogglePath, activePath, onActivate }) {
 
   return (
     <div style={{ fontSize: 14 }}>
-      <div style={{ fontWeight: 600, marginBottom: 8 }}>Kategorie</div>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>Categories</div>
       <div>
         {tree.map(n => (
           <TreeNode
@@ -53,7 +53,7 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
         <button
           onClick={() => hasChildren && setOpen(o => !o)}
           disabled={!hasChildren}
-          title={hasChildren ? (open ? 'Sbalit' : 'Rozbalit') : 'Bez podkategorií'}
+          title={hasChildren ? (open ? 'Collapse' : 'Expand') : 'No subcategories'}
           style={{ width: 20, height: 20, border: 'none', background: 'transparent' }}
         >
           {hasChildren ? (open ? '▾' : '▸') : '•'}
@@ -63,7 +63,7 @@ function TreeNode({ node, depth, selectedPaths, onTogglePath, activePath, onActi
           style={{ width: 16, height: 16 }}
           checked={checked}
           onChange={() => onTogglePath(node.path)}
-          title="Označit kategorii (podstrom bude zahrnut v dotazu)"
+          title="Select category (subtree will be included in query)"
         />
         <button
           onClick={() => onActivate(node.path)}
@@ -106,21 +106,21 @@ export default function App() {
   const gridRef = useRef();
   const [rowData, setRowData] = useState([]);
 
-  // počty nad gridem
+  // Counts displayed above the grid
   const [displayedCount, setDisplayedCount] = useState(0);
   const [selectedCount, setSelectedCount] = useState(0);
 
-  // Stav UI: aktivní vs. označené kategorie
+  // UI state: active vs. selected categories
   const [mode, setMode] = useState('active'); // 'active' | 'selected'
   const [activePath, setActivePath] = useState('');
   const [selectedPaths, setSelectedPaths] = useState([]);
 
-  // Toggle jedné kategorie v seznamu označených (stačí samotná cesta; backend umí subtree)
+  // Toggle one category in the selected list (just the path; backend handles subtree)
   const onTogglePath = (path) => {
     setSelectedPaths(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
   };
 
-  // Fetch produktů podle módu
+  // Fetch products based on mode
   useEffect(() => {
     const cats = mode === 'active' ? (activePath ? [activePath] : []) : selectedPaths;
     if (cats.length === 0) { setRowData([]); setDisplayedCount(0); setSelectedCount(0); return; }
@@ -140,7 +140,7 @@ export default function App() {
     return () => { abort = true; };
   }, [mode, activePath, selectedPaths]);
 
-  // Když se změní data a grid existuje, přepočítej počty
+  // When data changes and grid exists, recalculate counts
   useEffect(() => {
     if (gridRef.current?.api) {
       setDisplayedCount(gridRef.current.api.getDisplayedRowCount());
@@ -162,39 +162,39 @@ export default function App() {
       suppressMenu: true,
     },
     { headerName: 'ID', field: 'id', width: 90 },
-    { headerName: 'Název', field: 'name', flex: 2, minWidth: 240 },
-    { headerName: 'Značka', field: 'brand', width: 160 },
-    { headerName: 'Kategorie', field: 'category', flex: 3, minWidth: 320 },
+    { headerName: 'Name', field: 'name', flex: 2, minWidth: 240 },
+    { headerName: 'Brand', field: 'brand', width: 160 },
+    { headerName: 'Category', field: 'category', flex: 3, minWidth: 320 },
   ], []);
 
   const defaultColDef = useMemo(() => ({ resizable: true, sortable: true }), []);
 
   return (
     <div style={{ height: '100vh', width: '100vw', boxSizing: 'border-box', padding: '12px', background: '#fff' }}>
-      {/* Toolbar s přepínačem módu + počty */}
+      {/* Toolbar with mode switcher + counts */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 18, fontWeight: 600 }}>Product Category Explorer</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '6px 10px', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-            <span style={{ fontSize: 14 }}>Zobrazení</span>
+            <span style={{ fontSize: 14 }}>Display</span>
             <select value={mode} onChange={(e) => setMode(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none' }}>
-              <option value="active">Aktivní kategorie</option>
-              <option value="selected">Označené kategorie</option>
+              <option value="active">Active category</option>
+              <option value="selected">Selected categories</option>
             </select>
           </div>
-          {/* počty nad gridem */}
+          {/* Counts above the grid */}
           <div style={{ display: 'flex', gap: 8 }}>
             <span style={{ fontSize: 13, color: '#374151', background: '#f3f4f6', padding: '4px 8px', borderRadius: 8 }}>
-              Zobrazeno: <b>{displayedCount}</b>
+              Displayed: <b>{displayedCount}</b>
             </span>
             <span style={{ fontSize: 13, color: '#374151', background: '#eef2ff', padding: '4px 8px', borderRadius: 8 }}>
-              Označeno: <b>{selectedCount}</b>
+              Selected: <b>{selectedCount}</b>
             </span>
           </div>
         </div>
       </div>
 
-      {/* Dvousloupcový layout: strom vlevo (fixní), grid vpravo (flex:1) */}
+      {/* Two-column layout: tree on the left (fixed), grid on the right (flex:1) */}
       <div style={{ height: 'calc(100vh - 56px)', display: 'flex', gap: 12 }}>
         <aside
           style={{
@@ -210,13 +210,13 @@ export default function App() {
             onActivate={setActivePath}
           />
 
-          {/* Přehled stavů */}
+          {/* Status overview */}
           <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280' }}>
             <div style={{ marginBottom: 6 }}>
-              Aktivní: {activePath ? <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>{activePath}</code> : '(nic)'}
+              Active: {activePath ? <code style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>{activePath}</code> : '(none)'}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              Označené ({selectedPaths.length}):
+              Selected ({selectedPaths.length}):
               {selectedPaths.map(p => (
                 <code key={p} style={{ background: '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>{p}</code>
               ))}

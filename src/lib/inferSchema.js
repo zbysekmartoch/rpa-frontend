@@ -16,7 +16,7 @@ export function inferSchemaFromData(data, title = 'Config') {
       case 'number': return { type: 'number' };
       case 'boolean': return { type: 'boolean' };
       case 'array':
-        // najdi první neprázdný prvek a odvoď item schema, jinak any
+        // Find the first non-empty element and infer item schema, otherwise any
         const first = value.find(v => v !== undefined);
         return { type: 'array', items: first !== undefined ? infer(first) : {} };
       case 'object':
